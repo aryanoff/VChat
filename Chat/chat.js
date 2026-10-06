@@ -25,7 +25,8 @@ const AppState = {
     starredMessageIds: new Set(),
     mutedChats: new Map(), // convId -> expiry timestamp | 'always'
     blockedIds: new Set(),
-    reactions: new Map(), // messageId -> { [emoji]: count, userReacted: Set }
+    reactions: new Map(), // messageId -> { counts: { [emoji]: number }, userReacted: string[] }
+    optimisticClientIds: new Set(), // clientId set for active optimistic deduplication
     replyingTo: null, // message object
     editingMessage: null, // message object
     offlineQueue: [], // [ { clientId, conversationId, content, messageType, createdAt } ]
@@ -293,6 +294,31 @@ function loadLocalPreferences() {
         const muteJson = localStorage.getItem(getStorageKey("muted_chats"));
         if (muteJson) AppState.mutedChats = new Map(Object.entries(JSON.parse(muteJson)));
     } catch { AppState.mutedChats = new Map(); }
+
+    try {
+        const reactionsJson = localStorage.getItem(getStorageKey("reactions"));
+        if (reactionsJson) AppState.reactions = new Map(Object.entries(JSON.parse(reactionsJson)));
+    } catch { AppState.reactions = new Map(); }
+}
+
+function isChatMuted(convId) {
+    if (!convId || !AppState.mutedChats.has(convId)) return false;
+    const val = AppState.mutedChats.get(convId);
+    if (val === "always") return true;
+    const expiry = Number(val);
+    if (!isNaN(expiry) && Date.now() > expiry) {
+        AppState.mutedChats.delete(convId);
+        saveMuted();
+        if (AppState.client) {
+            AppState.client.from("conversation_members")
+                .update({ muted: false })
+                .eq("conversation_id", convId)
+                .eq("user_id", AppState.currentUser?.id || "")
+                .then(() => {}).catch(() => {});
+        }
+        return false;
+    }
+    return true;
 }
 
 function saveDraft(convoId, text) {
@@ -323,6 +349,13 @@ function saveMuted() {
     try {
         const obj = Object.fromEntries(AppState.mutedChats);
         localStorage.setItem(getStorageKey("muted_chats"), JSON.stringify(obj));
+    } catch { /* silent */ }
+}
+
+function saveReactions() {
+    try {
+        const obj = Object.fromEntries(AppState.reactions);
+        localStorage.setItem(getStorageKey("reactions"), JSON.stringify(obj));
     } catch { /* silent */ }
 }
 
@@ -488,7 +521,7 @@ function renderConversationList() {
     AppState.conversations.forEach((row) => {
         const name = row.peer_name || row.title || "Chat";
         const isGroup = !!row.is_group;
-        const isMuted = row.muted || AppState.mutedChats.has(row.conversation_id);
+        const isMuted = row.muted || isChatMuted(row.conversation_id);
         const isPinned = AppState.pinnedChatIds.has(row.conversation_id);
         const hasDraft = !!(AppState.drafts[row.conversation_id] && row.conversation_id !== AppState.activeConversationId);
 
@@ -638,6 +671,7 @@ function showIdleThreadState() {
     if (Els.chatSearchButton) Els.chatSearchButton.disabled = true;
 
     updateDetails(null);
+    cancelVoiceRecording();
 }
 
 function clearMessageElements() {
@@ -646,6 +680,7 @@ function clearMessageElements() {
 }
 
 async function openConversation(id) {
+    cancelVoiceRecording();
     // Preserve draft from previous conversation
     if (AppState.activeConversationId && Els.messageInput && !AppState.editingMessage) {
         saveDraft(AppState.activeConversationId, Els.messageInput.value);
@@ -802,6 +837,8 @@ function appendMessage(msg, prepend = false) {
     const wrap = document.createElement("div");
     wrap.className = "message " + (isMine ? "sent" : "received");
     wrap.dataset.id = msg.id || msg.client_id || "";
+    if (msg.client_id) wrap.dataset.clientId = msg.client_id;
+    if (msg.created_at) wrap.dataset.createdAt = msg.created_at;
 
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
@@ -958,6 +995,13 @@ function appendMessage(msg, prepend = false) {
     }
     bubble.appendChild(meta);
 
+    // Reactions container on message bubble
+    const reactionsWrap = document.createElement("div");
+    reactionsWrap.className = "message-reactions-wrap";
+    reactionsWrap.dataset.reactionsFor = msg.id || "";
+    renderMessageReactions(msg.id, reactionsWrap);
+    bubble.appendChild(reactionsWrap);
+
     // Message Actions Bar (Hover)
     if (!msg.deleted_at) {
         const actionsBar = document.createElement("div");
@@ -1001,10 +1045,28 @@ function appendMessage(msg, prepend = false) {
             showToast("Copied to clipboard", "fa-solid fa-copy");
         });
 
+        // Info
+        const infoBtn = document.createElement("button");
+        infoBtn.type = "button";
+        infoBtn.className = "msg-act-btn";
+        infoBtn.title = "Message info";
+        infoBtn.innerHTML = `<i class="fa-solid fa-circle-info"></i>`;
+        infoBtn.addEventListener("click", () => openMessageInfoModal(msg));
+
+        // Forward
+        const fwdBtn = document.createElement("button");
+        fwdBtn.type = "button";
+        fwdBtn.className = "msg-act-btn";
+        fwdBtn.title = "Forward";
+        fwdBtn.innerHTML = `<i class="fa-solid fa-share"></i>`;
+        fwdBtn.addEventListener("click", () => forwardMessage(msg));
+
         actionsBar.appendChild(reactBtn);
         actionsBar.appendChild(replyBtn);
         actionsBar.appendChild(starBtn);
         actionsBar.appendChild(copyBtn);
+        actionsBar.appendChild(infoBtn);
+        actionsBar.appendChild(fwdBtn);
 
         // Edit (own text messages only)
         if (isMine && msg.message_type === "text") {
@@ -1040,6 +1102,105 @@ function appendMessage(msg, prepend = false) {
     }
 }
 
+function openMessageInfoModal(msg) {
+    if (!Els.messageInfoModal || !Els.msgInfoDetails) return;
+    const isMine = msg.sender_id === AppState.currentUser?.id;
+    const senderName = isMine ? "You" : (AppState.activePeer?.name || "Contact");
+    const sentTime = msg.created_at ? new Date(msg.created_at).toLocaleString() : "Unknown";
+    const statusText = !isMine ? "Received" : (msg._failed ? "Failed (click retry)" : (msg._queued ? "Queued offline" : (msg._sending ? "Sending…" : (AppState.peerReadAt && new Date(msg.created_at) <= new Date(AppState.peerReadAt) ? "Read by recipient (✓✓)" : "Delivered to server (✓)"))));
+
+    Els.msgInfoDetails.innerHTML = `
+        <div class="msg-info-row">
+            <span class="label">Sender</span>
+            <span class="value">${Dom.escape(senderName)}</span>
+        </div>
+        <div class="msg-info-row">
+            <span class="label">Sent Time</span>
+            <span class="value">${Dom.escape(sentTime)}</span>
+        </div>
+        <div class="msg-info-row">
+            <span class="label">Delivery Status</span>
+            <span class="value">${Dom.escape(statusText)}</span>
+        </div>
+        <div class="msg-info-row">
+            <span class="label">Message Type</span>
+            <span class="value" style="text-transform: capitalize;">${Dom.escape(msg.message_type || "text")}</span>
+        </div>
+        <div class="msg-info-row">
+            <span class="label">Message ID</span>
+            <span class="value" style="font-family: monospace; font-size: 11px;">${Dom.escape(msg.id || msg.client_id || "Pending")}</span>
+        </div>
+    `;
+    Els.messageInfoModal.hidden = false;
+}
+
+function forwardMessage(msg) {
+    if (!msg || !msg.content) return;
+    if (Els.messageInput) {
+        Els.messageInput.value = `Forwarded: ${msg.content}`;
+        autoResizeTextarea();
+        Els.messageInput.focus();
+        showToast("Message loaded into composer to forward.", "fa-solid fa-share");
+    }
+}
+
+function addMessageReaction(msgId, emoji) {
+    if (!msgId || !emoji) return;
+    let data = AppState.reactions.get(msgId);
+    if (!data) {
+        data = { counts: {}, userReacted: [] };
+    }
+    const hadReacted = data.userReacted && data.userReacted.includes(emoji);
+    if (hadReacted) {
+        data.counts[emoji] = Math.max((data.counts[emoji] || 1) - 1, 0);
+        if (data.counts[emoji] === 0) delete data.counts[emoji];
+        data.userReacted = data.userReacted.filter(e => e !== emoji);
+    } else {
+        data.counts[emoji] = (data.counts[emoji] || 0) + 1;
+        if (!data.userReacted) data.userReacted = [];
+        data.userReacted.push(emoji);
+    }
+    AppState.reactions.set(msgId, data);
+    saveReactions();
+
+    if (typingChannel) {
+        typingChannel.send({
+            type: "broadcast",
+            event: "reaction",
+            payload: { message_id: msgId, emoji, user_id: AppState.currentUser?.id, added: !hadReacted }
+        });
+    }
+
+    const wrap = Els.chatMessages.querySelector(`[data-reactions-for="${msgId}"]`);
+    if (wrap) renderMessageReactions(msgId, wrap);
+}
+
+function renderMessageReactions(msgId, container) {
+    if (!container) return;
+    Dom.clear(container);
+    const data = AppState.reactions.get(msgId);
+    if (!data || !data.counts) return;
+
+    Object.entries(data.counts).forEach(([emoji, count]) => {
+        if (count <= 0) return;
+        const pill = document.createElement("button");
+        pill.type = "button";
+        const userHas = data.userReacted && data.userReacted.includes(emoji);
+        pill.className = "message-reaction-pill" + (userHas ? " user-reacted" : "");
+        pill.innerHTML = `<span>${emoji}</span> <span>${count}</span>`;
+        pill.title = userHas ? `You reacted with ${emoji}` : `${count} reaction(s)`;
+        pill.addEventListener("click", () => addMessageReaction(msgId, emoji));
+        container.appendChild(pill);
+    });
+}
+
+function renderAllReactions() {
+    Els.chatMessages.querySelectorAll(".message-reactions-wrap").forEach(wrap => {
+        const id = wrap.dataset.reactionsFor;
+        if (id) renderMessageReactions(id, wrap);
+    });
+}
+
 function scrollMessagesToBottom() {
     if (Els.chatMessages) Els.chatMessages.scrollTop = Els.chatMessages.scrollHeight;
 }
@@ -1066,8 +1227,13 @@ async function hydrateAttachment(msg) {
 
 async function loadMessages(older) {
     if (!AppState.activeConversationId || AppState.loadingOlder) return;
+    if (older && !AppState.hasMore) return;
+
     AppState.loadingOlder = true;
     if (Els.loadOlderBtn && older) Els.loadOlderBtn.textContent = "Loading…";
+
+    const prevScrollHeight = Els.chatMessages ? Els.chatMessages.scrollHeight : 0;
+    const prevScrollTop = Els.chatMessages ? Els.chatMessages.scrollTop : 0;
 
     let query = AppState.client
         .from("messages")
@@ -1107,7 +1273,11 @@ async function loadMessages(older) {
     }
 
     if (!older) {
-        if (batch.length === 0) {
+        // Also display any offline queued messages for this conversation at the bottom
+        const queuedForThread = AppState.offlineQueue.filter(q => q.conversation_id === AppState.activeConversationId);
+        queuedForThread.forEach(q => appendMessage(q, false));
+
+        if (batch.length === 0 && queuedForThread.length === 0) {
             const starter = document.createElement("div");
             starter.className = "thread-starter-banner";
             starter.innerHTML = `
@@ -1118,20 +1288,36 @@ async function loadMessages(older) {
             Els.chatMessages.insertBefore(starter, Els.typingIndicator || null);
         }
         scrollMessagesToBottom();
+    } else {
+        // PRESERVE SCROLL POSITION ON OLDER HISTORY PREPEND
+        if (Els.chatMessages) {
+            const newScrollHeight = Els.chatMessages.scrollHeight;
+            Els.chatMessages.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
+        }
     }
+
     if (Els.loadOlderBtn && AppState.hasMore) Els.loadOlderBtn.textContent = "Load older messages";
 }
 
 async function refreshPeerRead() {
     if (!AppState.activeConversationId) return;
-    const { data } = await AppState.client.rpc("get_peer_read_at", { p_conversation_id: AppState.activeConversationId });
-    AppState.peerReadAt = data || null;
-    Els.chatMessages.querySelectorAll(".message.sent").forEach((node) => {
-        const tick = node.querySelector(".message-read");
-        if (tick && !tick.textContent.includes("!")) {
-            tick.textContent = AppState.peerReadAt ? " ✓✓" : " ✓";
-        }
-    });
+    try {
+        const { data } = await AppState.client.rpc("get_peer_read_at", { p_conversation_id: AppState.activeConversationId });
+        AppState.peerReadAt = data || null;
+        Els.chatMessages.querySelectorAll(".message.sent").forEach((node) => {
+            const tick = node.querySelector(".message-read");
+            if (tick && !tick.textContent.includes("!")) {
+                const msgTime = node.dataset.createdAt ? new Date(node.dataset.createdAt) : null;
+                const isRead = AppState.peerReadAt && msgTime && msgTime <= new Date(AppState.peerReadAt);
+                tick.textContent = isRead ? " ✓✓" : " ✓";
+                if (isRead) {
+                    tick.classList.add("read");
+                } else {
+                    tick.classList.remove("read");
+                }
+            }
+        });
+    } catch { /* silent */ }
 }
 
 function unsubscribeConversation() {
@@ -1158,6 +1344,24 @@ function subscribeConversation(id) {
         }, async (payload) => {
             const msg = payload.new;
             if (AppState.renderedMessageIds.has(msg.id)) return;
+
+            // Reconcile optimistic message if matching client_id exists
+            if (msg.client_id && AppState.optimisticClientIds.has(msg.client_id)) {
+                AppState.optimisticClientIds.delete(msg.client_id);
+                const optEl = Els.chatMessages.querySelector(`[data-client-id="${msg.client_id}"]`)
+                           || Els.chatMessages.querySelector(`[data-id="tmp-${msg.client_id}"]`);
+                if (optEl) {
+                    optEl.dataset.id = msg.id;
+                    optEl.dataset.createdAt = msg.created_at;
+                    optEl.classList.remove("sending");
+                    const tick = optEl.querySelector(".message-read");
+                    if (tick) tick.textContent = messageStatusTicks(msg);
+                    AppState.renderedMessageIds.add(msg.id);
+                    AppState.renderedMessageIds.delete("tmp-" + msg.client_id);
+                    return;
+                }
+            }
+
             const starter = Els.chatMessages.querySelector(".thread-starter-banner");
             if (starter) starter.remove();
             await hydrateAttachment(msg);
@@ -1183,13 +1387,35 @@ function subscribeConversation(id) {
     typingChannel.on("broadcast", { event: "typing" }, (payload) => {
         if (!Els.typingIndicator) return;
         const from = payload.payload && payload.payload.user_id;
-        if (from === AppState.currentUser.id) return;
+        if (from === AppState.currentUser?.id) return;
         Els.typingIndicator.hidden = false;
         if (Els.typingLabel) {
             Els.typingLabel.textContent = (AppState.activePeer?.name || "Someone") + " is typing...";
         }
         clearTimeout(Els.typingIndicator._hide);
-        Els.typingIndicator._hide = setTimeout(() => { Els.typingIndicator.hidden = true; }, 1800);
+        Els.typingIndicator._hide = setTimeout(() => { Els.typingIndicator.hidden = true; }, 2500);
+    });
+    typingChannel.on("broadcast", { event: "typing_stop" }, (payload) => {
+        if (!Els.typingIndicator) return;
+        const from = payload.payload && payload.payload.user_id;
+        if (from !== AppState.currentUser?.id) {
+            Els.typingIndicator.hidden = true;
+        }
+    });
+    typingChannel.on("broadcast", { event: "reaction" }, (payload) => {
+        const p = payload.payload;
+        if (p && p.message_id && p.emoji) {
+            let data = AppState.reactions.get(p.message_id) || { counts: {}, userReacted: [] };
+            if (p.added) {
+                data.counts[p.emoji] = (data.counts[p.emoji] || 0) + 1;
+            } else {
+                data.counts[p.emoji] = Math.max((data.counts[p.emoji] || 1) - 1, 0);
+            }
+            AppState.reactions.set(p.message_id, data);
+            saveReactions();
+            const wrap = Els.chatMessages.querySelector(`[data-reactions-for="${p.message_id}"]`);
+            if (wrap) renderMessageReactions(p.message_id, wrap);
+        }
     });
     typingChannel.subscribe();
 }
@@ -1236,11 +1462,32 @@ function autoResizeTextarea() {
     Els.messageInput.style.height = Math.min(Els.messageInput.scrollHeight, 120) + "px";
 }
 
+let lastTypingEmit = 0;
+let typingStopTimer = null;
+
 function emitTyping() {
-    if (!typingChannel || !AppState.activeConversationId) return;
+    if (!typingChannel || !AppState.currentUser || !AppState.activeConversationId) return;
+    const now = Date.now();
+    if (now - lastTypingEmit > 2500) {
+        lastTypingEmit = now;
+        typingChannel.send({
+            type: "broadcast",
+            event: "typing",
+            payload: { user_id: AppState.currentUser.id, name: AppState.currentProfile?.name }
+        });
+    }
+
+    clearTimeout(typingStopTimer);
+    typingStopTimer = setTimeout(() => {
+        stopTyping();
+    }, 2000);
+}
+
+function stopTyping() {
+    if (!typingChannel || !AppState.currentUser || !AppState.activeConversationId) return;
     typingChannel.send({
         type: "broadcast",
-        event: "typing",
+        event: "typing_stop",
         payload: { user_id: AppState.currentUser.id }
     });
 }
@@ -1349,9 +1596,11 @@ async function sendMessage() {
     }
 
     AppState.sending = true;
+    AppState.optimisticClientIds.add(clientId);
     const optimistic = {
         id: "tmp-" + clientId,
         client_id: clientId,
+        conversation_id: AppState.activeConversationId,
         sender_id: AppState.currentUser.id,
         content: outgoingContent,
         message_type: "text",
@@ -1366,6 +1615,7 @@ async function sendMessage() {
     autoResizeTextarea();
     delete AppState.drafts[AppState.activeConversationId];
     saveDraft(AppState.activeConversationId, "");
+    stopTyping();
 
     try {
         const { data, error } = await AppState.client.rpc("send_chat_message", {
@@ -1375,13 +1625,27 @@ async function sendMessage() {
             p_client_id: clientId
         });
         if (error) throw error;
-        const tmp = Els.chatMessages.querySelector('[data-id="tmp-' + clientId + '"]');
-        if (tmp) tmp.remove();
-        AppState.renderedMessageIds.delete(optimistic.id);
-        if (data) appendMessage(data, false);
+
+        AppState.optimisticClientIds.delete(clientId);
+        // Reconcile optimistic element in place
+        const tmp = Els.chatMessages.querySelector(`[data-client-id="${clientId}"]`)
+                 || Els.chatMessages.querySelector(`[data-id="tmp-${clientId}"]`);
+        if (tmp && data) {
+            tmp.dataset.id = data.id;
+            tmp.dataset.createdAt = data.created_at;
+            tmp.classList.remove("sending");
+            const tick = tmp.querySelector(".message-read");
+            if (tick) tick.textContent = messageStatusTicks(data);
+            AppState.renderedMessageIds.add(data.id);
+            AppState.renderedMessageIds.delete("tmp-" + clientId);
+        } else if (data && !AppState.renderedMessageIds.has(data.id)) {
+            appendMessage(data, false);
+        }
         await loadConversations();
     } catch (err) {
-        const tmp = Els.chatMessages.querySelector('[data-id="tmp-' + clientId + '"]');
+        AppState.optimisticClientIds.delete(clientId);
+        const tmp = Els.chatMessages.querySelector(`[data-client-id="${clientId}"]`)
+                 || Els.chatMessages.querySelector(`[data-id="tmp-${clientId}"]`);
         if (tmp) {
             const tick = tmp.querySelector(".message-read");
             if (tick) {
@@ -1476,14 +1740,18 @@ async function startVoiceRecording() {
 }
 
 function cancelVoiceRecording() {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach((t) => t.stop());
+    if (mediaRecorder) {
+        try {
+            if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+            if (mediaRecorder.stream) {
+                mediaRecorder.stream.getTracks().forEach((t) => t.stop());
+            }
+        } catch { /* silent */ }
+        mediaRecorder = null;
     }
     clearInterval(voiceTimerInterval);
     audioChunks = [];
     if (Els.voiceRecordingBar) Els.voiceRecordingBar.hidden = true;
-    showToast("Voice recording cancelled", "fa-solid fa-trash");
 }
 
 async function sendVoiceRecording() {
@@ -1532,8 +1800,110 @@ function formatTimerSeconds(secs) {
 }
 
 // ==========================================================================
-// 12. CALLING ENGINE (Web Audio Ringback Synthesizer & WebRTC Controls)
+// 12. CALLING ENGINE & CALLSERVICE ARCHITECTURE (Phase 20)
 // ==========================================================================
+
+const CallService = {
+    state: {
+        active: false,
+        mode: "audio",
+        status: "idle",
+        peer: null,
+        timer: 0,
+        interval: null,
+        timeout: null,
+        muted: false,
+        cameraOff: false,
+        stream: null,
+        audioContext: null,
+        ringNodes: null
+    },
+
+    start(peer, mode = "audio") {
+        if (!peer) return showToast("Select a contact to call.", "fa-solid fa-phone");
+        this.end();
+
+        this.state.active = true;
+        this.state.mode = mode;
+        this.state.status = "calling";
+        this.state.peer = peer;
+        this.state.timer = 0;
+        this.state.muted = false;
+        this.state.cameraOff = false;
+
+        if (Els.callModal) Els.callModal.hidden = false;
+        if (Els.callContactName) Els.callContactName.textContent = peer.name;
+        if (Els.callContactInitials) Els.callContactInitials.textContent = Dom.initials(peer.name);
+        if (Els.callTypeBadge) {
+            Els.callTypeBadge.innerHTML = mode === "video" 
+                ? `<i class="fa-solid fa-video"></i> Video Call` 
+                : `<i class="fa-solid fa-phone"></i> Voice Call`;
+        }
+        if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Calling peer…";
+        if (Els.callTimer) Els.callTimer.hidden = true;
+        if (Els.callCameraBtn) Els.callCameraBtn.hidden = (mode !== "video");
+        if (Els.callVideoPreview) Els.callVideoPreview.hidden = (mode !== "video");
+
+        playRingTone();
+
+        if (navigator.mediaDevices?.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: mode === "video", audio: true })
+                .then((stream) => {
+                    this.state.stream = stream;
+                    if (mode === "video" && Els.callLocalVideo) {
+                        Els.callLocalVideo.srcObject = stream;
+                    }
+                })
+                .catch(() => showToast("Microphone or camera permission unavailable.", "fa-solid fa-triangle-exclamation"));
+        }
+
+        setTimeout(() => {
+            if (!this.state.active) return;
+            if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Signaling standby — Peer not connected";
+        }, 2200);
+
+        this.state.timeout = setTimeout(() => {
+            if (!this.state.active) return;
+            stopRingTone();
+            if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Peer unavailable (Signaling server offline)";
+            showToast("Voice & Video calling requires a WebRTC signaling server (STUN/TURN) to exchange session offers.", "fa-solid fa-circle-info");
+            setTimeout(() => this.end(), 2200);
+        }, 6500);
+    },
+
+    toggleMicrophone() {
+        this.state.muted = !this.state.muted;
+        if (Els.callMuteBtn) Els.callMuteBtn.classList.toggle("active-off", this.state.muted);
+        if (this.state.stream) {
+            this.state.stream.getAudioTracks().forEach((t) => (t.enabled = !this.state.muted));
+        }
+        showToast(this.state.muted ? "Microphone muted" : "Microphone active", "fa-solid fa-microphone");
+    },
+
+    toggleCamera() {
+        this.state.cameraOff = !this.state.cameraOff;
+        if (Els.callCameraBtn) Els.callCameraBtn.classList.toggle("active-off", this.state.cameraOff);
+        if (this.state.stream) {
+            this.state.stream.getVideoTracks().forEach((t) => (t.enabled = !this.state.cameraOff));
+        }
+    },
+
+    end() {
+        stopRingTone();
+        clearTimeout(this.state.timeout);
+        clearInterval(this.state.interval);
+        if (this.state.stream) {
+            this.state.stream.getTracks().forEach((t) => t.stop());
+            this.state.stream = null;
+        }
+        if (Els.callLocalVideo) Els.callLocalVideo.srcObject = null;
+        if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Call ended";
+        this.state.active = false;
+        setTimeout(() => {
+            if (Els.callModal) Els.callModal.hidden = true;
+        }, 500);
+    }
+};
 
 function playRingTone() {
     try {
@@ -1554,97 +1924,31 @@ function playRingTone() {
 
         osc1.start();
         osc2.start();
-        AppState.call.audioContext = ctx;
-        AppState.call.ringNodes = { osc1, osc2, gain };
+        CallService.state.audioContext = ctx;
+        CallService.state.ringNodes = { osc1, osc2, gain };
     } catch { /* audio not allowed yet */ }
 }
 
 function stopRingTone() {
-    if (AppState.call.ringNodes) {
+    if (CallService.state.ringNodes) {
         try {
-            AppState.call.ringNodes.osc1.stop();
-            AppState.call.ringNodes.osc2.stop();
+            CallService.state.ringNodes.osc1.stop();
+            CallService.state.ringNodes.osc2.stop();
         } catch { /* silent */ }
-        AppState.call.ringNodes = null;
+        CallService.state.ringNodes = null;
     }
-    if (AppState.call.audioContext) {
-        try { AppState.call.audioContext.close(); } catch { /* silent */ }
-        AppState.call.audioContext = null;
+    if (CallService.state.audioContext) {
+        try { CallService.state.audioContext.close(); } catch { /* silent */ }
+        CallService.state.audioContext = null;
     }
 }
 
 function startCall(mode = "audio") {
-    if (!AppState.activePeer) return showToast("Select a contact to call.", "fa-solid fa-phone");
-    AppState.call.active = true;
-    AppState.call.mode = mode;
-    AppState.call.status = "calling";
-    AppState.call.peer = AppState.activePeer;
-    AppState.call.timer = 0;
-    AppState.call.muted = false;
-    AppState.call.cameraOff = false;
-
-    if (Els.callModal) Els.callModal.hidden = false;
-    if (Els.callContactName) Els.callContactName.textContent = AppState.activePeer.name;
-    if (Els.callContactInitials) Els.callContactInitials.textContent = Dom.initials(AppState.activePeer.name);
-    if (Els.callTypeBadge) {
-        Els.callTypeBadge.innerHTML = mode === "video" ? `<i class="fa-solid fa-video"></i> Video Call` : `<i class="fa-solid fa-phone"></i> Voice Call`;
-    }
-    if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Calling...";
-    if (Els.callTimer) Els.callTimer.hidden = true;
-    if (Els.callCameraBtn) Els.callCameraBtn.hidden = (mode !== "video");
-    if (Els.callVideoPreview) Els.callVideoPreview.hidden = (mode !== "video");
-
-    playRingTone();
-
-    // Transition from Calling -> Ringing -> Connected
-    setTimeout(() => {
-        if (!AppState.call.active) return;
-        if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Ringing...";
-    }, 1500);
-
-    setTimeout(() => {
-        if (!AppState.call.active) return;
-        stopRingTone();
-        AppState.call.status = "connected";
-        if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Connected";
-        if (Els.callTimer) {
-            Els.callTimer.hidden = false;
-            Els.callTimer.textContent = "00:00";
-        }
-        // Start duration counter
-        AppState.call.interval = setInterval(() => {
-            AppState.call.timer += 1;
-            const mins = Math.floor(AppState.call.timer / 60);
-            const secs = AppState.call.timer % 60;
-            if (Els.callTimer) {
-                Els.callTimer.textContent = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
-            }
-        }, 1000);
-
-        // If video, acquire camera stream
-        if (mode === "video" && navigator.mediaDevices?.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then((stream) => {
-                    AppState.call.stream = stream;
-                    if (Els.callLocalVideo) Els.callLocalVideo.srcObject = stream;
-                })
-                .catch(() => showToast("Camera preview unavailable.", "fa-solid fa-video-slash"));
-        }
-    }, 3800);
+    CallService.start(AppState.activePeer, mode);
 }
 
 function endCall() {
-    stopRingTone();
-    clearInterval(AppState.call.interval);
-    if (AppState.call.stream) {
-        AppState.call.stream.getTracks().forEach((t) => t.stop());
-        AppState.call.stream = null;
-    }
-    if (Els.callStatusLabel) Els.callStatusLabel.textContent = "Call ended";
-    setTimeout(() => {
-        if (Els.callModal) Els.callModal.hidden = true;
-        AppState.call.active = false;
-    }, 600);
+    CallService.end();
 }
 
 // ==========================================================================
@@ -1723,8 +2027,10 @@ function performInChatSearch() {
     Els.chatMessages.querySelectorAll(".message p").forEach((p) => {
         const text = p.textContent;
         if (text.toLowerCase().includes(query)) {
-            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-            p.innerHTML = p.textContent.replace(regex, `<mark class="chat-search-highlight">$1</mark>`);
+            const escaped = Dom && typeof Dom.escape === "function" ? Dom.escape(text) : text;
+            const escapedQuery = Dom && typeof Dom.escape === "function" ? Dom.escape(query) : query;
+            const regex = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+            p.innerHTML = escaped.replace(regex, `<mark class="chat-search-highlight">$1</mark>`);
             matches.push(p);
         }
     });
@@ -2021,7 +2327,7 @@ function updateDetails(peer) {
     const isBlocked = AppState.blockedIds.has(peer.id);
     if (Els.detailsBlockLabel) Els.detailsBlockLabel.textContent = isBlocked ? "Unblock contact" : "Block contact";
 
-    const isMuted = AppState.mutedChats.has(AppState.activeConversationId);
+    const isMuted = isChatMuted(AppState.activeConversationId);
     if (Els.detailsMuteLabel) Els.detailsMuteLabel.textContent = isMuted ? "Unmute notifications" : "Mute notifications";
 
     loadDetailsMedia();
@@ -2436,14 +2742,36 @@ function bindEventListeners() {
     if (Els.detailsViewAllMediaBtn) Els.detailsViewAllMediaBtn.addEventListener("click", openSharedMediaModal);
     if (Els.closeSharedMediaModal) Els.closeSharedMediaModal.addEventListener("click", () => (Els.sharedMediaModal.hidden = true));
 
-    // Mute Modal
-    if (Els.detailsMuteBtn) Els.detailsMuteBtn.addEventListener("click", openMuteModal);
+    // Mute Modal & Toggle
+    if (Els.detailsMuteBtn) {
+        Els.detailsMuteBtn.addEventListener("click", async () => {
+            if (!AppState.activeConversationId) return showToast("Select a conversation first.", "fa-solid fa-bell");
+            if (isChatMuted(AppState.activeConversationId)) {
+                AppState.mutedChats.delete(AppState.activeConversationId);
+                saveMuted();
+                if (AppState.client) {
+                    await AppState.client.from("conversation_members").update({ muted: false })
+                        .eq("conversation_id", AppState.activeConversationId)
+                        .eq("user_id", AppState.currentUser.id);
+                }
+                if (Els.detailsMuteLabel) Els.detailsMuteLabel.textContent = "Mute notifications";
+                showToast("Notifications unmuted", "fa-solid fa-bell");
+                await loadConversations();
+            } else {
+                openMuteModal();
+            }
+        });
+    }
     if (Els.closeMuteModal) Els.closeMuteModal.addEventListener("click", () => (Els.muteModal.hidden = true));
     if (Els.confirmMuteBtn) {
         Els.confirmMuteBtn.addEventListener("click", async () => {
             if (!AppState.activeConversationId) return;
             const dur = document.querySelector('input[name="muteDuration"]:checked')?.value || "1h";
-            AppState.mutedChats.set(AppState.activeConversationId, dur);
+            let expiry = "always";
+            if (dur === "1h") expiry = Date.now() + 60 * 60 * 1000;
+            else if (dur === "8h") expiry = Date.now() + 8 * 60 * 60 * 1000;
+            else if (dur === "1w") expiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
+            AppState.mutedChats.set(AppState.activeConversationId, expiry);
             saveMuted();
             await AppState.client.from("conversation_members").update({ muted: true })
                 .eq("conversation_id", AppState.activeConversationId)
@@ -2593,8 +2921,21 @@ function bindEventListeners() {
         });
     }
 
-    // Older messages button
+    // Older messages button & infinite upward scroll
     if (Els.loadOlderBtn) Els.loadOlderBtn.addEventListener("click", () => loadMessages(true));
+    if (Els.chatMessages) {
+        let scrollDebounceTimer = null;
+        Els.chatMessages.addEventListener("scroll", () => {
+            if (Els.chatMessages.scrollTop < 80 && AppState.hasMore && !AppState.loadingOlder) {
+                clearTimeout(scrollDebounceTimer);
+                scrollDebounceTimer = setTimeout(() => {
+                    if (Els.chatMessages.scrollTop < 80 && AppState.hasMore && !AppState.loadingOlder) {
+                        loadMessages(true);
+                    }
+                }, 150);
+            }
+        });
+    }
 
     // Global Dismiss on Click Outside
     document.addEventListener("click", (e) => {
@@ -2643,13 +2984,49 @@ function bindEventListeners() {
         }
     });
 
-    // Online / Offline Detection
-    window.addEventListener("online", () => {
+    // Online / Offline Detection & Reconnection Reconciliation
+    window.addEventListener("online", async () => {
         updateConnectionBanner("online");
         drainOfflineQueue();
+        try {
+            await loadConversations();
+            if (AppState.activeConversationId) {
+                await loadMessages(false);
+            }
+        } catch { /* ignore transient errors during reconnect */ }
     });
     window.addEventListener("offline", () => {
         updateConnectionBanner("offline");
+    });
+
+    // Multi-Tab Synchronization
+    window.addEventListener("storage", (e) => {
+        if (!e.key) return;
+        if (e.key === getStorageKey("drafts")) {
+            loadLocalPreferences();
+            if (AppState.activeConversationId) {
+                const currentDraft = AppState.drafts[AppState.activeConversationId] || "";
+                if (Els.messageInput && Els.messageInput.value !== currentDraft && document.activeElement !== Els.messageInput) {
+                    Els.messageInput.value = currentDraft;
+                }
+            }
+            renderConversationList();
+        } else if (e.key === getStorageKey("pinned_chats")) {
+            loadLocalPreferences();
+            renderConversationList();
+        } else if (e.key === getStorageKey("muted_chats")) {
+            loadLocalPreferences();
+            renderConversationList();
+            if (AppState.activeConversationId && Els.detailsMuteLabel) {
+                const isMuted = isChatMuted(AppState.activeConversationId);
+                Els.detailsMuteLabel.textContent = isMuted ? "Unmute notifications" : "Mute notifications";
+            }
+        } else if (e.key === getStorageKey("reactions")) {
+            loadLocalPreferences();
+            renderAllReactions();
+        } else if (e.key === getStorageKey("starred")) {
+            loadLocalPreferences();
+        }
     });
 }
 

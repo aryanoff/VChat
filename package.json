@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node server.js",
     "build": "node scripts/write-config.js",
-    "write-config": "node scripts/write-config.js"
+    "write-config": "node scripts/write-config.js",
+    "test": "node tests/messaging.test.js"
   },
   "engines": {
     "node": ">=18"

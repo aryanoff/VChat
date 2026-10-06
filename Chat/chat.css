@@ -5038,3 +5038,93 @@ body.light-theme .starred-item-card {
     color: #171A18;
 }
 
+/* =============================================
+   MESSAGE INFO MODAL DETAILS
+============================================= */
+.msg-info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 0 8px;
+}
+
+.msg-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+body.dark-theme .msg-info-row {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.msg-info-row span.label {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.msg-info-row span.value {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+body.dark-theme .msg-info-row span.value {
+    color: #FFFFFF;
+}
+
+/* =============================================
+   MESSAGE REACTION PILLS
+============================================= */
+.message-reactions-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.message-reaction-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.message-reaction-pill:hover {
+    transform: translateY(-1px);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.message-reaction-pill.user-reacted {
+    background: rgba(0, 200, 83, 0.15);
+    border-color: rgba(0, 200, 83, 0.35);
+}
+
+body.dark-theme .message-reaction-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+}
+
+body.dark-theme .message-reaction-pill:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+body.dark-theme .message-reaction-pill.user-reacted {
+    background: rgba(0, 200, 83, 0.22);
+    border-color: var(--green-bright);
+}
+
+
