@@ -16,7 +16,7 @@
     >
     <meta name="theme-color" content="#00c853">
 
-    <title>VChat — Company & Support</title>
+    <title>VChat â€” Company & Support</title>
 
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/ams1rfsh/image/upload/c_auto,h_1024,w_1024/width_748_rjlv1y.png">
 
@@ -1160,7 +1160,7 @@
 
 
         <p>
-            © 2026 VChat. All rights reserved.
+            Â© 2026 VChat. All rights reserved.
         </p>
 
     </footer>
@@ -1262,35 +1262,49 @@
                     return;
                 }
 
-                showContactFeedback("Thank you, " + fullName + "! Your request has been prepared. Opening your email app to deliver it...", "success");
+                    showContactFeedback("Sending your message...", "success");
 
-                const submitBtn = contactForm.querySelector(".contact-submit");
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = "";
-                    const chk = document.createElement("i");
-                    chk.className = "fa-solid fa-check";
-                    submitBtn.appendChild(chk);
-                    submitBtn.appendChild(document.createTextNode(" Prepared"));
-                }
-
-                setTimeout(() => {
-                    const mailtoUrl = `mailto:raryansingh125@gmail.com?subject=${encodeURIComponent("VChat: " + topic + " - " + fullName)}&body=${encodeURIComponent("Name: " + fullName + "\nEmail: " + email + "\nMobile: +91 " + mobile + "\nTopic: " + topic + "\n\nMessage:\n" + message)}`;
-                    window.location.href = mailtoUrl;
-
+                    const submitBtn = contactForm.querySelector(".contact-submit");
                     if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = "";
-                        submitBtn.appendChild(document.createTextNode("Send message "));
-                        const sendI = document.createElement("i");
-                        sendI.className = "fa-solid fa-paper-plane";
-                        submitBtn.appendChild(sendI);
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = "Sending...";
                     }
-                }, 800);
-            });
+
+                    const api = window.VChat && window.VChat.supabase;
+                    if (api && api.isConfigured()) {
+                        const client = api.getClient();
+                        client.from("contact_submissions").insert({
+                            full_name: fullName,
+                            email: email,
+                            mobile: mobile,
+                            topic: topic,
+                            message: message
+                        }).then(({ error }) => {
+                            if (error) {
+                                showContactFeedback(error.message, "error");
+                            } else {
+                                showContactFeedback("Thank you, " + fullName + "! Your message has been sent successfully.", "success");
+                                contactForm.reset();
+                            }
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = `Send message <i class="fa-solid fa-paper-plane"></i>`;
+                            }
+                        });
+                    } else {
+                        showContactFeedback("Supabase is not configured. Message not sent.", "error");
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = `Send message <i class="fa-solid fa-paper-plane"></i>`;
+                        }
+                    }
+                });
         }
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
 </body>
 
 </html>

@@ -41,6 +41,9 @@
 
     <link rel="stylesheet" href="authstyle.css">
     <script src="../theme.js"></script>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 
 
@@ -856,6 +859,17 @@
 
                 </p>
 
+
+                <!-- Mobile capture for Google/OAuth users without a mobile -->
+                <div class="form-group" id="otpMobileCaptureGroup" hidden>
+                    <label for="otpMobileCapture">Your 10-digit mobile number</label>
+                    <div class="phone-input">
+                        <div class="country-code"><span>+91</span></div>
+                        <input type="tel" id="otpMobileCapture" inputmode="numeric" maxlength="10"
+                            placeholder="Enter mobile number" autocomplete="tel">
+                    </div>
+                </div>
+
             </section>
 
 
@@ -905,6 +919,13 @@
 
     </footer>
 
+    <!-- Shared JS modules -->
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/validators.js"></script>
+    <script src="../js/dom.js"></script>
+
+    <!-- Auth logic -->
     <script src="auth.js"></script>
 
 </body>
