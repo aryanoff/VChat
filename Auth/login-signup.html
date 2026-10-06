@@ -324,40 +324,36 @@
             </div>
 
 
+            <!-- =================================
+                 AUTH STATUS / ERROR ALERT BANNER
+            ================================== -->
+
+            <div class="auth-alert-banner" id="authAlertBanner" hidden>
+                <div class="alert-banner-icon" id="authAlertIcon">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </div>
+                <div class="alert-banner-content">
+                    <strong id="authAlertTitle">Notification</strong>
+                    <p id="authAlertMessage">Message details</p>
+                    <div class="alert-banner-actions" id="authAlertActions" hidden>
+                        <button type="button" class="alert-action-btn primary" id="alertResendBtn">
+                            <i class="fa-solid fa-paper-plane"></i> Resend confirmation email
+                        </button>
+                        <button type="button" class="alert-action-btn secondary" id="alertLoginBtn">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign in
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="alert-banner-close" id="authAlertClose" aria-label="Dismiss">&times;</button>
+            </div>
+
+
 
             <!-- =================================
                  LOGIN FORM
             ================================== -->
 
             <form id="loginForm" class="auth-form active-form" novalidate>
-
-
-                <!-- MOBILE NUMBER -->
-
-                <div class="form-group">
-
-                    <label for="loginMobile">
-                        Mobile number
-                    </label>
-
-
-                    <div class="phone-input">
-
-                        <div class="country-code">
-
-                            <span>+91</span>
-
-                            <i class="fa-solid fa-chevron-down"></i>
-
-                        </div>
-
-
-                        <input type="tel" id="loginMobile" name="loginMobile" inputmode="numeric" maxlength="10"
-                            autocomplete="tel" placeholder="Enter mobile number" required>
-
-                    </div>
-
-                </div>
 
                 <!-- EMAIL -->
 
@@ -488,18 +484,6 @@
 
                 </div>
 
-
-
-                <!-- OTP -->
-
-                <button type="button" class="otp-button" id="loginOtpButton">
-
-                    <i class="fa-solid fa-mobile-screen-button"></i>
-
-                    Continue with mobile OTP
-
-                </button>
-
             </form>
 
 
@@ -539,7 +523,7 @@
                 <div class="form-group">
 
                     <label for="signupMobile">
-                        Mobile number
+                        Mobile number (optional)
                     </label>
 
 
@@ -555,7 +539,7 @@
 
 
                         <input type="tel" id="signupMobile" inputmode="numeric" maxlength="10" autocomplete="tel"
-                            placeholder="Enter mobile number" required>
+                            placeholder="Enter 10-digit mobile (optional)">
 
                     </div>
 
@@ -596,7 +580,7 @@
                         <i class="fa-solid fa-lock"></i>
 
 
-                        <input type="password" id="signupPassword" placeholder="Create a strong password"
+                        <input type="password" id="signupPassword" placeholder="Create a strong password (min 8 characters)"
                             autocomplete="new-password" required>
 
 
@@ -697,104 +681,98 @@
             </form>
 
             <!-- =========================================
-     OTP VERIFICATION
-========================================== -->
+                 CHECK YOUR EMAIL / CONFIRMATION VIEW
+            ========================================== -->
 
-            <section class="otp-section" id="otpSection" hidden>
+            <section class="otp-section confirm-email-section" id="otpSection" hidden>
 
                 <div class="otp-header">
 
                     <button type="button" class="otp-back" id="otpBackButton">
                         <i class="fa-solid fa-arrow-left"></i>
-                        Back
+                        Back to sign in
                     </button>
 
 
-                    <div class="otp-security-icon">
-
-                        <i class="fa-solid fa-shield-halved"></i>
-
+                    <div class="otp-security-icon email-sent-icon">
+                        <i class="fa-solid fa-envelope-circle-check"></i>
                     </div>
 
 
                     <span class="auth-eyebrow">
-                        VERIFY YOUR ACCOUNT
+                        ACCOUNT CREATED
                     </span>
 
-                    <h2>
-                        Verify your email address
+                    <h2 id="confirmViewTitle">
+                        Check your email
                     </h2>
 
-                    <p>
-                        We sent a confirmation link and 6-digit code to your email address.
-                        Click the link in your inbox or enter the code below to continue.
+                    <p id="confirmViewSubtitle">
+                        We sent a confirmation link to <strong id="emailOtpDestination">user@example.com</strong>. Click the link in your email to activate your VChat account.
                     </p>
 
                 </div>
 
-                <!-- EMAIL OTP -->
-                <div class="otp-group">
-
-                    <div class="otp-label-row">
-                        <label>
-                            Verification Code
-                        </label>
-                        <span id="emailOtpStatus">
-                            Pending
-                        </span>
+                <!-- CONFIRM STEPS CARD -->
+                <div class="confirm-email-card">
+                    <div class="confirm-step">
+                        <span class="step-num">1</span>
+                        <div class="step-text">
+                            <strong>Open your inbox</strong>
+                            <span>Look for a confirmation email from VChat.</span>
+                        </div>
                     </div>
-
-                    <div class="otp-inputs">
-                        <input type="text" maxlength="1" inputmode="numeric">
-                        <input type="text" maxlength="1" inputmode="numeric">
-                        <input type="text" maxlength="1" inputmode="numeric">
-                        <input type="text" maxlength="1" inputmode="numeric">
-                        <input type="text" maxlength="1" inputmode="numeric">
-                        <input type="text" maxlength="1" inputmode="numeric">
+                    <div class="confirm-step">
+                        <span class="step-num">2</span>
+                        <div class="step-text">
+                            <strong>Click "Confirm your mail"</strong>
+                            <span>The link verifies your email and grants immediate access to your chats.</span>
+                        </div>
                     </div>
-
-                    <div class="otp-delivery">
-                        <i class="fa-regular fa-envelope"></i>
-                        <span id="emailOtpDestination">
-                            user@example.com
-                        </span>
-                    </div>
-
                 </div>
 
-                <!-- TIMER -->
+                <!-- TIMER & RESEND -->
                 <div class="otp-timer">
                     <span id="otpTimer">
                         Resend available in 30s
                     </span>
                     <button type="button" id="resendOtp" disabled>
-                        Resend code
+                        Resend confirmation email
                     </button>
                 </div>
 
-                <!-- VERIFY -->
-                <button type="button" class="auth-submit" id="verifyBothOtp">
+                <!-- DIRECT SIGN IN ACTION -->
+                <button type="button" class="auth-submit" id="alreadyConfirmedBtn">
                     <span>
-                        Verify Email & Continue
+                        I've confirmed my email — Sign In
                     </span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
 
-                <p class="otp-note">
-                    <i class="fa-solid fa-envelope-open-text"></i>
-                    Check your spam or promotions folder if the email does not arrive promptly.
-                </p>
-
-
-                <!-- Mobile capture for Google/OAuth users without a mobile -->
-                <div class="form-group" id="otpMobileCaptureGroup" hidden>
-                    <label for="otpMobileCapture">Your 10-digit mobile number</label>
-                    <div class="phone-input">
-                        <div class="country-code"><span>+91</span></div>
-                        <input type="tel" id="otpMobileCapture" inputmode="numeric" maxlength="10"
-                            placeholder="Enter mobile number" autocomplete="tel">
+                <!-- OPTIONAL 6-DIGIT CODE ACCORDION (If email template includes {{ .Token }}) -->
+                <div class="manual-code-accordion">
+                    <button type="button" class="toggle-code-btn" id="toggleManualCodeBtn">
+                        <i class="fa-solid fa-key"></i> Have a 6-digit verification code?
+                    </button>
+                    <div class="manual-code-wrap" id="manualCodeWrap" hidden>
+                        <div class="otp-inputs">
+                            <input type="text" maxlength="1" inputmode="numeric">
+                            <input type="text" maxlength="1" inputmode="numeric">
+                            <input type="text" maxlength="1" inputmode="numeric">
+                            <input type="text" maxlength="1" inputmode="numeric">
+                            <input type="text" maxlength="1" inputmode="numeric">
+                            <input type="text" maxlength="1" inputmode="numeric">
+                        </div>
+                        <button type="button" class="auth-submit secondary" id="verifyBothOtp">
+                            <span>Verify Code</span>
+                        </button>
                     </div>
                 </div>
+
+                <p class="otp-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Be sure to check your spam or promotions folder if the email does not arrive promptly.
+                </p>
 
             </section>
 

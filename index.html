@@ -23,6 +23,18 @@
 
     <link rel="stylesheet" href="style.css">
     <script src="theme.js"></script>
+    <script>
+        // Forward any Supabase Auth redirect hashes or error parameters to Auth page
+        (function() {
+            var h = window.location.hash || "";
+            var s = window.location.search || "";
+            if (h && (h.indexOf("error=") !== -1 || h.indexOf("error_code=") !== -1 || h.indexOf("access_token=") !== -1 || h.indexOf("type=signup") !== -1 || h.indexOf("type=recovery") !== -1)) {
+                window.location.replace("Auth/login-signup.html" + h);
+            } else if (s && (s.indexOf("error=") !== -1 || s.indexOf("error_description=") !== -1 || s.indexOf("code=") !== -1)) {
+                window.location.replace("Auth/login-signup.html" + s);
+            }
+        })();
+    </script>
 </head>
 
 <body>

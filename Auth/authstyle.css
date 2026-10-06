@@ -3065,4 +3065,302 @@ body.dark-theme .otp-timer {
 
 body.dark-theme .otp-note {
     color: #717A74;
-}
+}
+
+/* =============================================
+   AUTH ALERT BANNER
+============================================= */
+.auth-alert-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    margin: 16px 0;
+    animation: alertSlideDown 0.2s ease;
+    position: relative;
+}
+
+.auth-alert-banner.success {
+    background: rgba(0, 200, 83, 0.09);
+    border-color: rgba(0, 200, 83, 0.3);
+}
+
+.auth-alert-banner.info {
+    background: rgba(59, 130, 246, 0.09);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+@keyframes alertSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.alert-banner-icon {
+    font-size: 18px;
+    color: #EF4444;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.auth-alert-banner.success .alert-banner-icon {
+    color: var(--green-bright);
+}
+
+.auth-alert-banner.info .alert-banner-icon {
+    color: #60A5FA;
+}
+
+.alert-banner-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.alert-banner-content strong {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #DC2626;
+    margin-bottom: 3px;
+}
+
+.auth-alert-banner.success .alert-banner-content strong {
+    color: var(--green-bright);
+}
+
+.auth-alert-banner.info .alert-banner-content strong {
+    color: #60A5FA;
+}
+
+.alert-banner-content p {
+    font-size: 12.5px;
+    color: #4A5568;
+    line-height: 1.45;
+}
+
+.alert-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.alert-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: 0.15s ease;
+}
+
+.alert-action-btn.primary {
+    background: var(--green);
+    color: #060708;
+}
+
+.alert-action-btn.primary:hover {
+    background: var(--green-bright);
+    transform: translateY(-1px);
+}
+
+.alert-action-btn.secondary {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text-dark);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.alert-action-btn.secondary:hover {
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.alert-banner-close {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #718096;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: 0.15s ease;
+}
+
+.alert-banner-close:hover {
+    color: var(--text-dark);
+}
+
+/* =============================================
+   CONFIRM EMAIL CARD & STEPS
+============================================= */
+.confirm-email-card {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 14px 0 18px;
+}
+
+.confirm-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.confirm-step .step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 200, 83, 0.15);
+    color: var(--green-dark);
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.confirm-step .step-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.confirm-step .step-text strong {
+    font-size: 13px;
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+.confirm-step .step-text span {
+    font-size: 12px;
+    color: #64748B;
+    line-height: 1.4;
+}
+
+.email-sent-icon {
+    background: rgba(0, 200, 83, 0.12) !important;
+    border-color: rgba(0, 200, 83, 0.25) !important;
+    color: var(--green-dark) !important;
+}
+
+.manual-code-accordion {
+    margin: 12px 0 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.toggle-code-btn {
+    background: transparent;
+    border: none;
+    color: #64748B;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: 0.15s ease;
+}
+
+.toggle-code-btn:hover {
+    color: var(--green-dark);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.manual-code-wrap {
+    width: 100%;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: alertSlideDown 0.15s ease;
+}
+
+.auth-submit.secondary {
+    background: #171D21;
+    color: white;
+}
+
+.auth-submit.secondary:hover {
+    background: #252E34;
+}
+
+/* DARK THEME ADAPTATIONS */
+body.dark-theme .alert-banner-content strong {
+    color: #F87171;
+}
+
+body.dark-theme .auth-alert-banner.success .alert-banner-content strong {
+    color: var(--green-bright);
+}
+
+body.dark-theme .alert-banner-content p {
+    color: #CBD5E1;
+}
+
+body.dark-theme .alert-action-btn.secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-theme .alert-action-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+body.dark-theme .confirm-email-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .confirm-step .step-text strong {
+    color: #FFFFFF;
+}
+
+body.dark-theme .confirm-step .step-text span {
+    color: #94A3B8;
+}
+
+body.dark-theme .confirm-step .step-num {
+    background: rgba(0, 200, 83, 0.2);
+    color: var(--green-bright);
+}
+
+body.dark-theme .email-sent-icon {
+    color: var(--green-bright) !important;
+}
+
+body.dark-theme .toggle-code-btn {
+    color: #94A3B8;
+}
+
+body.dark-theme .toggle-code-btn:hover {
+    color: var(--green-bright);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-theme .auth-submit.secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+body.dark-theme .auth-submit.secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+

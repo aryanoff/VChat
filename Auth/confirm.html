@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Email — VChat</title>
+    <meta name="description" content="Verify your email address to access your VChat account.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Theme & Auth Styles -->
+    <link rel="stylesheet" href="../css/themes.css">
+    <link rel="stylesheet" href="./authstyle.css">
+
+    <style>
+        .confirm-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .confirm-box {
+            width: 100%;
+            max-width: 480px;
+            background: var(--auth-card-bg, #1e1e24);
+            border: 1px solid var(--auth-border, rgba(255, 255, 255, 0.08));
+            border-radius: 20px;
+            padding: 40px 32px;
+            box-shadow: var(--auth-shadow, 0 20px 40px rgba(0, 0, 0, 0.4));
+            text-align: center;
+            backdrop-filter: blur(16px);
+        }
+
+        .confirm-icon-wrap {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            background: rgba(0, 200, 83, 0.12);
+            color: #00c853;
+            border: 1px solid rgba(0, 200, 83, 0.3);
+            animation: pulseSoft 2.5s infinite;
+        }
+
+        .confirm-icon-wrap.error {
+            background: rgba(255, 82, 82, 0.12);
+            color: #ff5252;
+            border-color: rgba(255, 82, 82, 0.3);
+            animation: none;
+        }
+
+        .confirm-icon-wrap.loading {
+            background: rgba(41, 121, 255, 0.12);
+            color: #2979ff;
+            border-color: rgba(41, 121, 255, 0.3);
+        }
+
+        @keyframes pulseSoft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .confirm-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--auth-text-primary, #ffffff);
+            text-decoration: none;
+            margin-bottom: 24px;
+        }
+
+        .confirm-brand img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .confirm-brand span span {
+            color: #00c853;
+        }
+
+        .confirm-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--auth-text-primary, #ffffff);
+            margin-bottom: 12px;
+        }
+
+        .confirm-desc {
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: var(--auth-text-secondary, #a0a0a8);
+            margin-bottom: 28px;
+        }
+
+        .confirm-btn-primary {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00c853 0%, #009624 100%);
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px rgba(0, 200, 83, 0.3);
+            text-decoration: none;
+        }
+
+        .confirm-btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4);
+        }
+
+        .confirm-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .confirm-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--auth-text-secondary, #a0a0a8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: color 0.2s;
+        }
+
+        .confirm-btn-secondary:hover {
+            color: #00c853;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Decor -->
+    <div class="auth-bg-elements" aria-hidden="true">
+        <div class="auth-glow auth-glow-one"></div>
+        <div class="auth-glow auth-glow-two"></div>
+        <div class="auth-grain"></div>
+    </div>
+
+    <div class="confirm-wrapper">
+        <div class="confirm-box" id="confirmCard">
+            <a href="../index.html" class="confirm-brand">
+                <img src="https://res.cloudinary.com/ams1rfsh/image/upload/v1791196140/width_748_rjlv1y.png" alt="VChat Logo">
+                <span>V<span>Chat</span></span>
+            </a>
+
+            <div class="confirm-icon-wrap" id="statusIcon">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+            </div>
+
+            <h1 class="confirm-title" id="statusTitle">
+                Confirm your VChat Account
+            </h1>
+
+            <p class="confirm-desc" id="statusDesc">
+                Click the button below to verify your email address and start chatting on VChat.
+            </p>
+
+            <button type="button" class="confirm-btn-primary" id="confirmActionBtn">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Confirm & Open VChat</span>
+            </button>
+
+            <a href="./login-signup.html" class="confirm-btn-secondary" id="backToLoginLink">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to Sign In</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/supabase-client.js"></script>
+
+    <script>
+        (async function () {
+            const card = document.getElementById("confirmCard");
+            const statusIcon = document.getElementById("statusIcon");
+            const statusTitle = document.getElementById("statusTitle");
+            const statusDesc = document.getElementById("statusDesc");
+            const actionBtn = document.getElementById("confirmActionBtn");
+            const backLink = document.getElementById("backToLoginLink");
+
+            // Extract tokens from query or hash
+            const searchParams = new URLSearchParams(window.location.search || "");
+            const hashRaw = (window.location.hash || "").replace(/^#/, "");
+            const hashParams = new URLSearchParams(hashRaw);
+
+            const get = (key) => searchParams.get(key) || hashParams.get(key) || "";
+
+            const tokenHash = get("token_hash") || get("token");
+            const type = get("type") || "signup";
+            const error = get("error");
+            const errorCode = get("error_code");
+            const errorDesc = get("error_description");
+
+            // Error already passed in URL
+            if (errorCode || error) {
+                renderError(
+                    errorCode === "otp_expired" 
+                        ? "Verification link invalid or already used" 
+                        : "Email Verification Failed",
+                    errorCode === "otp_expired"
+                        ? "That confirmation link is invalid or has already been used. If your account is confirmed, you can sign in directly. Otherwise, request a new confirmation email."
+                        : (errorDesc || "Could not verify your email address.")
+                );
+                return;
+            }
+
+            if (!tokenHash) {
+                // If user lands here with no token, check if already signed in
+                try {
+                    const client = window.VChat.supabase.getClient();
+                    const { data: { session } } = await client.auth.getSession();
+                    if (session) {
+                        renderSuccess("Already Logged In", "Your email is verified and your session is active. Taking you to your chats...");
+                        setTimeout(() => window.location.replace("../Chat/chat.html"), 1500);
+                        return;
+                    }
+                } catch (e) {}
+
+                renderNotice(
+                    "Email Confirmation",
+                    "To verify your email address, please click the confirmation link sent to your inbox, or return to sign in."
+                );
+                return;
+            }
+
+            // Valid tokenHash found! Human click triggers verifyOtp (scanner-safe)
+            actionBtn.addEventListener("click", async () => {
+                actionBtn.disabled = true;
+                actionBtn.querySelector("span").textContent = "Verifying...";
+                statusIcon.className = "confirm-icon-wrap loading";
+                statusIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                try {
+                    const client = window.VChat.supabase.getClient();
+                    const { data, error: verifyError } = await client.auth.verifyOtp({
+                        token_hash: tokenHash,
+                        type: type === "recovery" ? "recovery" : "signup"
+                    });
+
+                    if (verifyError) {
+                        // Retry with email type if signup failed
+                        const retry = await client.auth.verifyOtp({
+                            token_hash: tokenHash,
+                            type: "email"
+                        });
+                        if (retry.error) throw verifyError;
+                    }
+
+                    renderSuccess(
+                        "Email Verified Successfully!",
+                        "Your account has been confirmed. Taking you to VChat now..."
+                    );
+
+                    setTimeout(() => {
+                        window.location.replace("../Chat/chat.html");
+                    }, 1200);
+                } catch (err) {
+                    renderError(
+                        "Verification Link Expired",
+                        "That confirmation link is invalid or has already been used. Please sign in or request a new confirmation email."
+                    );
+                }
+            });
+
+            function renderSuccess(title, msg) {
+                statusIcon.className = "confirm-icon-wrap";
+                statusIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                statusTitle.textContent = title;
+                statusDesc.textContent = msg;
+                actionBtn.style.display = "none";
+                backLink.innerHTML = '<i class="fa-solid fa-comments"></i> <span>Open VChat</span>';
+                backLink.href = "../Chat/chat.html";
+            }
+
+            function renderError(title, msg) {
+                statusIcon.className = "confirm-icon-wrap error";
+                statusIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                statusTitle.textContent = title;
+                statusDesc.textContent = msg;
+                actionBtn.style.display = "none";
+                backLink.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Sign In to VChat</span>';
+                backLink.href = "./login-signup.html";
+            }
+
+            function renderNotice(title, msg) {
+                statusIcon.className = "confirm-icon-wrap";
+                statusTitle.textContent = title;
+                statusDesc.textContent = msg;
+                actionBtn.textContent = "Go to Sign In";
+                actionBtn.onclick = () => window.location.href = "./login-signup.html";
+            }
+        })();
+    </script>
+</body>
+
+</html>

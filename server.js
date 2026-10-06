@@ -38,6 +38,8 @@ const ROUTE_ALIASES = {
     '/auth/': '/Auth/login-signup.html',
     '/login': '/Auth/login-signup.html',
     '/signup': '/Auth/login-signup.html',
+    '/confirm': '/Auth/confirm.html',
+    '/confirm/': '/Auth/confirm.html',
     '/chat': '/Chat/chat.html',
     '/chat/': '/Chat/chat.html',
     '/info': '/info/info.html',
