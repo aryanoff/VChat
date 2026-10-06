@@ -227,21 +227,6 @@ async function ensureProfileMetadata(client, extra) {
     }
 }
 
-async function sendMobileCode(client) {
-    const { data, error } = await client.rpc("send_mobile_otp");
-    if (error) throw error;
-    const cfg = window.VChat.supabase.getConfig();
-    if (data && data.dev_code && cfg.devMobileOtp) {
-        showToast("Development mock mobile code (not SMS): " + data.dev_code, "fa-solid fa-flask");
-        if (otpIntro) {
-            otpIntro.textContent = "Email uses your Supabase inbox. Mobile uses a development mock code shown here — this is not real SMS.";
-        }
-    } else if (data && data.channel === "pending_sms_provider") {
-        showToast("Mobile SMS is not configured yet. Enable development mock OTP in SQL (app_runtime_config) or connect an SMS provider.", "fa-solid fa-circle-info");
-    }
-    return data;
-}
-
 async function syncEmailVerifiedFlag(client, user) {
     const confirmed = !!(user && (user.email_confirmed_at || user.confirmed_at));
     emailVerified = confirmed;
@@ -256,8 +241,8 @@ async function syncEmailVerifiedFlag(client, user) {
 }
 
 function maybeContinue() {
-    if (emailVerified && mobileVerified) {
-        showToast("Verified. Opening your chats...", "fa-solid fa-circle-check");
+    if (emailVerified) {
+        showToast("Email verified. Opening your chats...", "fa-solid fa-circle-check");
         setTimeout(goToChat, 400);
         return true;
     }
@@ -270,22 +255,20 @@ function showOtpVerification(data) {
     signupForm.style.display = "none";
     if (authTabs) authTabs.style.display = "none";
     otpSection.hidden = false;
-    if (mobileOtpDestination) mobileOtpDestination.textContent = maskMobile(data.mobile);
-    if (emailOtpDestination) emailOtpDestination.textContent = maskEmail(data.email);
+    if (emailOtpDestination) emailOtpDestination.textContent = data.email || "";
     document.querySelectorAll(".otp-inputs input").forEach((input) => {
         input.value = "";
         input.classList.remove("verified");
     });
     const firstInput = document.querySelector(".otp-inputs input");
     if (firstInput) firstInput.focus();
-    setVerifyStatus(mobileOtpStatus, mobileVerified, mobileVerified ? "Verified" : "Not verified");
-    setVerifyStatus(emailOtpStatus, emailVerified, emailVerified ? "Verified" : "Not verified");
+    setVerifyStatus(emailOtpStatus, emailVerified, emailVerified ? "Verified" : "Pending");
     if (otpNote) {
         otpNote.textContent = "";
-        const lock = document.createElement("i");
-        lock.className = "fa-solid fa-lock";
-        otpNote.appendChild(lock);
-        otpNote.appendChild(document.createTextNode(" Email and mobile must both be verified before chat access."));
+        const icon = document.createElement("i");
+        icon.className = "fa-solid fa-envelope-open-text";
+        otpNote.appendChild(icon);
+        otpNote.appendChild(document.createTextNode(" Enter the 6-digit code or click the confirmation link in your email."));
     }
     startOtpTimer();
 }
@@ -294,36 +277,20 @@ async function afterAuthenticated(client, extras) {
     await ensureProfileMetadata(client, extras || {});
     const { user, profile } = await loadProfile(client);
     emailVerified = await syncEmailVerifiedFlag(client, user);
-    mobileVerified = !!(profile && profile.mobileVerified);
-    if (emailVerified && mobileVerified) {
+
+    // Google OAuth users or users with confirmed email immediately access chat
+    const isGoogle = !!(user && user.app_metadata && user.app_metadata.provider === "google");
+    if (emailVerified || isGoogle) {
         goToChat();
         return;
     }
+
     showOtpVerification({
         mode: extras && extras.mode ? extras.mode : "login",
         name: (profile && profile.name) || (extras && extras.name) || "",
         mobile: (profile && profile.mobile) || (extras && extras.mobile) || "",
         email: user.email
     });
-    const capture = document.getElementById("otpMobileCapture");
-    if (capture) {
-        capture.hidden = !!(profile && profile.mobile);
-        if (profile && profile.mobile) capture.value = profile.mobile;
-    }
-    if (!mobileVerified) {
-        try {
-            if (!(profile && profile.mobile) && extras && extras.mobile) {
-                await client.from("profiles").update({ mobile: V.normalizeMobile(extras.mobile) }).eq("id", user.id);
-            }
-            if ((profile && profile.mobile) || (extras && extras.mobile)) {
-                await sendMobileCode(client);
-            } else {
-                showToast("Enter your 10-digit mobile number below, then tap Resend OTP.", "fa-solid fa-mobile-screen");
-            }
-        } catch (err) {
-            showToast(err.message || "Could not send mobile verification.", "fa-solid fa-triangle-exclamation");
-        }
-    }
 }
 
 if (forgotPasswordLink) {
@@ -489,9 +456,8 @@ if (signupForm) {
         pendingAuth = { mode: "signup", name, mobile, email };
         if (!data.session) {
             emailVerified = false;
-            mobileVerified = false;
             showOtpVerification(pendingAuth);
-            showToast("Account created. Enter the email code from Supabase, then verify mobile.", "fa-solid fa-envelope");
+            showToast("Account created! Check your email to verify, or enter the 6-digit code below.", "fa-solid fa-envelope");
             return;
         }
         await afterAuthenticated(client, { mode: "signup", name, mobile, email });
@@ -512,19 +478,20 @@ if (resendOtp) {
         const client = requireClient();
         if (!client) return;
         try {
-            if (!emailVerified && pendingAuth.email) {
-                await client.auth.resend({ type: "signup", email: pendingAuth.email });
+            if (pendingAuth.email) {
+                const redirect = (window.VChat && window.VChat.supabase && window.VChat.supabase.getAuthRedirect)
+                    ? window.VChat.supabase.getAuthRedirect()
+                    : (window.location.origin + "/Auth/login-signup.html");
+                await client.auth.resend({
+                    type: "signup",
+                    email: pendingAuth.email,
+                    options: { emailRedirectTo: redirect }
+                });
             }
-            const { data: { session } } = await client.auth.getSession();
-            const capture = document.getElementById("otpMobileCapture");
-            if (session && capture && capture.value && V.isValidMobile(capture.value)) {
-                await client.from("profiles").update({ mobile: V.normalizeMobile(capture.value) }).eq("id", session.user.id);
-            }
-            if (session && !mobileVerified) await sendMobileCode(client);
-            showToast("A new verification email/code was requested.", "fa-solid fa-paper-plane");
+            showToast("A fresh confirmation email was sent to " + pendingAuth.email, "fa-solid fa-paper-plane");
             startOtpTimer();
         } catch (err) {
-            showToast(err.message || "Could not resend.", "fa-solid fa-triangle-exclamation");
+            showToast(err.message || "Could not resend email.", "fa-solid fa-triangle-exclamation");
         }
     });
 }
@@ -553,9 +520,8 @@ if (verifyBothOtp) {
     verifyBothOtp.addEventListener("click", async function () {
         const client = requireClient();
         if (!client) return;
-        const otpGroups = document.querySelectorAll(".otp-inputs");
-        const mobileOtp = getOtp(otpGroups[0]);
-        const emailOtp = getOtp(otpGroups[1]);
+        const otpGroup = document.querySelector(".otp-inputs");
+        const emailOtp = getOtp(otpGroup);
 
         this.disabled = true;
         const label = this.querySelector("span");
@@ -563,55 +529,42 @@ if (verifyBothOtp) {
         if (label) label.textContent = "Verifying...";
 
         try {
-            let { data: { session } } = await client.auth.getSession();
-
-            if (!emailVerified) {
-                if (emailOtp.length === 6) {
-                    const { error } = await client.auth.verifyOtp({
+            if (emailOtp.length === 6) {
+                const { error } = await client.auth.verifyOtp({
+                    email: pendingAuth.email,
+                    token: emailOtp,
+                    type: pendingAuth.mode === "signup" ? "signup" : "email"
+                });
+                if (error) {
+                    const retry = await client.auth.verifyOtp({
                         email: pendingAuth.email,
                         token: emailOtp,
-                        type: pendingAuth.mode === "signup" ? "signup" : "email"
+                        type: "email"
                     });
-                    if (error) {
-                        const retry = await client.auth.verifyOtp({
-                            email: pendingAuth.email,
-                            token: emailOtp,
-                            type: "email"
-                        });
-                        if (retry.error) throw error;
-                    }
-                    ({ data: { session } } = await client.auth.getSession());
-                } else if (!session) {
-                    throw new Error("Enter the 6-digit email code from your inbox (or open the confirmation link).");
+                    if (retry.error) throw error;
                 }
+            } else {
+                throw new Error("Enter the 6-digit verification code from your email (or open the confirmation link).");
             }
 
+            let { data: { session } } = await client.auth.getSession();
             if (session) {
                 const { data: { user } } = await client.auth.getUser();
                 emailVerified = await syncEmailVerifiedFlag(client, user);
                 await ensureProfileMetadata(client, pendingAuth);
-                if (!mobileVerified && mobileOtp.length === 6) {
-                    const { error } = await client.rpc("verify_mobile_otp", { p_code: mobileOtp });
-                    if (error) throw error;
-                    mobileVerified = true;
-                    setVerifyStatus(mobileOtpStatus, true, "Verified");
-                } else if (!mobileVerified) {
-                    throw new Error("Enter the complete 6-digit mobile code.");
-                }
-            }
-
-            document.querySelectorAll(".otp-inputs input").forEach((i) => i.classList.add("verified"));
-            if (!maybeContinue()) {
-                showToast(
-                    !emailVerified ? "Email is not verified yet." : "Mobile is not verified yet.",
-                    "fa-solid fa-triangle-exclamation"
-                );
+                document.querySelectorAll(".otp-inputs input").forEach((i) => i.classList.add("verified"));
+                setVerifyStatus(emailOtpStatus, true, "Verified");
+                showToast("Email verified! Opening your chats...", "fa-solid fa-circle-check");
+                setTimeout(goToChat, 500);
+            } else {
+                showToast("Email verified successfully! Please log in to VChat.", "fa-solid fa-circle-check");
+                setTimeout(switchToLogin, 1200);
             }
         } catch (err) {
             showToast(err.message || "Verification failed.", "fa-solid fa-triangle-exclamation");
         } finally {
             this.disabled = false;
-            if (label) label.textContent = previous || "Verify & Continue";
+            if (label) label.textContent = previous || "Verify Email & Continue";
         }
     });
 }

@@ -25,13 +25,18 @@
         return Boolean(url && key && !PLACEHOLDER.test(url) && !PLACEHOLDER.test(key) && !/service_role/i.test(key));
     }
 
-    function authRedirectTo() {
+    function getAuthRedirect() {
+        if (typeof global !== "undefined" && global.location && global.location.origin && global.location.origin !== "null" && !global.location.origin.startsWith("file:")) {
+            const origin = global.location.origin.replace(/\/+$/, "");
+            return origin + "/Auth/login-signup.html";
+        }
         const { publicUrl } = getConfig();
-        // Dynamically prioritize actual browser origin (works seamlessly on both localhost and Cloudflare Pages)
-        const origin = (global.location && global.location.origin && global.location.origin !== "null" && !global.location.origin.startsWith("file:"))
-            ? global.location.origin
-            : (publicUrl || "https://vchat-ckw.pages.dev");
-        return new URL("Auth/login-signup.html", origin.endsWith("/") ? origin : origin + "/").toString();
+        const fallback = (publicUrl || "https://vchat-ckw.pages.dev").replace(/\/+$/, "");
+        return fallback + "/Auth/login-signup.html";
+    }
+
+    function authRedirectTo() {
+        return getAuthRedirect();
     }
 
     let client = null;
@@ -83,6 +88,7 @@
         getConfig,
         isConfigured,
         getClient,
+        getAuthRedirect,
         authRedirectTo,
         mapProfile,
         setupError

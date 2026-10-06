@@ -1,11 +1,7 @@
-/**
- * VChat public frontend configuration.
- * Replace the placeholders with your Supabase project URL and anon (publishable) key.
- * Do not put SUPABASE_SERVICE_ROLE_KEY in this file.
- */
-window.VCHAT_CONFIG = window.VCHAT_CONFIG || {
-    SUPABASE_URL: "",
-    SUPABASE_PUBLISHABLE_KEY: "",
-    PUBLIC_URL: "",
-    DEV_MOBILE_OTP: true
+/** Generated from environment. Do not commit real keys. */
+window.VCHAT_CONFIG = {
+    "SUPABASE_URL": "https://zoxwltvpakyfyovpytpw.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_S2-Vcy8s391J5fvxL4QmeQ_ntJzcfxG",
+    "PUBLIC_URL": "https://vchat-ckw.pages.dev",
+    "DEV_MOBILE_OTP": false
 };

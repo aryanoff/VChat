@@ -445,7 +445,6 @@ begin
   from public.profiles p
   where (p.mobile = v_mobile or p.phone = v_mobile)
     and p.id <> auth.uid()
-    and coalesce(p.mobile_verified, p.mobile_verified_at is not null) = true
     and not public.vchat_is_blocked(auth.uid(), p.id)
   limit 1;
 end;

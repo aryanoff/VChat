@@ -126,15 +126,13 @@ async function requireSession() {
         avatarUrl: "",
         mobileVerified: false
     };
-    if (!currentUser.email_confirmed_at && !currentProfile.emailVerified) {
-        showToast("Verify your email before using chat.", "fa-solid fa-envelope");
+    const isGoogle = !!(currentUser.app_metadata && currentUser.app_metadata.provider === "google");
+    const isEmailVerified = !!(currentUser.email_confirmed_at || currentProfile.emailVerified || isGoogle);
+
+    if (!isEmailVerified) {
+        showToast("Please verify your email address to access VChat.", "fa-solid fa-envelope");
         redirectLogin();
         throw new Error("unverified email");
-    }
-    if (!currentProfile.mobileVerified) {
-        showToast("Verify your mobile number before using chat.", "fa-solid fa-mobile-screen");
-        redirectLogin();
-        throw new Error("unverified mobile");
     }
     if (currentUserName) currentUserName.textContent = currentProfile.name;
     if (currentUserInitials) currentUserInitials.textContent = Dom.initials(currentProfile.name);

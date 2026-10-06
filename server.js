@@ -122,7 +122,7 @@ const server = http.createServer((req, res) => {
         const env = { ...parseDotEnv(), ...process.env };
         const url = (env.SUPABASE_URL || env.VITE_SUPABASE_URL || '').trim();
         const key = (env.SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '').trim();
-        const publicUrl = (env.VCHAT_PUBLIC_URL || env.VITE_APP_URL || env.VITE_PRODUCTION_URL || '').trim();
+        const publicUrl = (env.VCHAT_PUBLIC_URL || env.VITE_APP_URL || ('http://localhost:' + PORT)).trim();
         const rawOtp = env.VCHAT_DEV_MOBILE_OTP ?? env.DEV_MOBILE_OTP;
         const devOtp = rawOtp == null ? true : String(rawOtp).toLowerCase() !== 'false';
 

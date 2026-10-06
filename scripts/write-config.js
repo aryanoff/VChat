@@ -28,11 +28,14 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").trim();
-const key = (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "").trim();
-const publicUrl = (process.env.VCHAT_PUBLIC_URL || process.env.VITE_APP_URL || process.env.VITE_PRODUCTION_URL || "").trim();
+const defaultUrl = "https://zoxwltvpakyfyovpytpw.supabase.co";
+const defaultKey = "sb_publishable_S2-Vcy8s391J5fvxL4QmeQ_ntJzcfxG";
+
+const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || defaultUrl).trim();
+const key = (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || defaultKey).trim();
+const publicUrl = (process.env.VITE_PRODUCTION_URL || process.env.VCHAT_PUBLIC_URL || "https://vchat-ckw.pages.dev").trim();
 const rawOtp = process.env.VCHAT_DEV_MOBILE_OTP ?? process.env.DEV_MOBILE_OTP;
-const devOtp = rawOtp == null ? true : String(rawOtp).toLowerCase() !== "false";
+const devOtp = rawOtp != null ? String(rawOtp).toLowerCase() === "true" : false;
 
 if (/SERVICE_ROLE|service_role/i.test(key)) {
     console.error("Refusing to write a service-role key into frontend config. Browser code must only use publishable/anon keys.");
