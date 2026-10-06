@@ -64,6 +64,8 @@ function resolveSafePath(urlPath) {
     // Check aliases
     if (ROUTE_ALIASES[cleanPath]) {
         cleanPath = ROUTE_ALIASES[cleanPath];
+    } else if (cleanPath.startsWith('/u/')) {
+        cleanPath = '/Chat/chat.html';
     }
 
     // Standardize leading slash

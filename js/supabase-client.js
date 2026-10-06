@@ -68,12 +68,16 @@
         if (!row) return null;
         return {
             id: row.id || row.user_id,
-            name: row.full_name || row.display_name || row.name || "VChat User",
+            name: row.display_name || row.full_name || row.name || "VChat User",
+            display_name: row.display_name || row.full_name || row.name || "VChat User",
+            username: row.username || "",
             about: row.about || row.bio || "Hey there! I am using VChat.",
             mobile: row.mobile || row.phone || "",
             email: row.email || "",
             avatarUrl: row.avatar_url || "",
             lastSeenAt: row.last_seen_at || null,
+            username_changed_at: row.username_changed_at || null,
+            username_change_available_at: row.username_change_available_at || null,
             mobileVerified: !!(row.mobile_verified || row.mobile_verified_at),
             emailVerified: !!(row.email_verified || row.email_verified_at)
         };

@@ -61,6 +61,56 @@
         return { ok: true };
     }
 
+    const RESERVED_USERNAMES = new Set([
+        "admin", "administrator", "support", "help", "security", "system",
+        "official", "staff", "moderator", "mod", "vchat", "vchatadmin",
+        "vchatsupport", "root", "owner", "billing", "contact", "abuse",
+        "privacy", "terms", "api", "developer", "bot", "guest", "null", "undefined"
+    ]);
+
+    function normalizeUsername(value) {
+        if (!value) return "";
+        let str = String(value).trim().toLowerCase();
+        if (str.startsWith("@")) str = str.slice(1);
+        return str;
+    }
+
+    function validateUsername(value) {
+        const username = normalizeUsername(value);
+        if (!username) {
+            return { ok: false, error: "Username cannot be empty.", code: "EMPTY" };
+        }
+        if (username.length < 3) {
+            return { ok: false, error: "Username must be at least 3 characters.", code: "TOO_SHORT" };
+        }
+        if (username.length > 20) {
+            return { ok: false, error: "Username cannot exceed 20 characters.", code: "TOO_LONG" };
+        }
+        if (username.startsWith(".") || username.endsWith(".")) {
+            return { ok: false, error: "Username cannot start or end with a period.", code: "INVALID_PERIOD" };
+        }
+        if (username.startsWith("_") || username.endsWith("_")) {
+            return { ok: false, error: "Username cannot start or end with an underscore.", code: "INVALID_UNDERSCORE" };
+        }
+        if (username.includes("..")) {
+            return { ok: false, error: "Username cannot contain consecutive periods.", code: "CONSECUTIVE_PERIODS" };
+        }
+        if (!/^[a-z0-9_.]+$/.test(username)) {
+            return { ok: false, error: "Username can only contain lowercase letters, numbers, underscores, and periods.", code: "INVALID_CHARS" };
+        }
+        if (!/[a-z]/.test(username)) {
+            return { ok: false, error: "Username must contain at least one letter.", code: "NO_LETTER" };
+        }
+        if (RESERVED_USERNAMES.has(username)) {
+            return { ok: false, error: "This username is reserved and cannot be claimed.", code: "RESERVED" };
+        }
+        return { ok: true, username };
+    }
+
+    function isValidUsername(value) {
+        return validateUsername(value).ok;
+    }
+
     global.VChatValidators = {
         digitsOnly,
         normalizeMobile,
@@ -70,6 +120,10 @@
         isValidPassword,
         isValidUuid,
         isAllowedAttachment,
-        isAllowedAvatar
+        isAllowedAvatar,
+        RESERVED_USERNAMES,
+        normalizeUsername,
+        validateUsername,
+        isValidUsername
     };
 })(window);

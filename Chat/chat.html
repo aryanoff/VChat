@@ -275,15 +275,8 @@
 
 
                     <div class="sidebar-profile-info">
-
-                        <strong id="currentUserName">
-                            VChat User
-                        </strong>
-
-                        <span>
-                            Online
-                        </span>
-
+                        <strong id="currentUserName">VChat User</strong>
+                        <span class="sidebar-user-handle" id="currentUserHandle">@username</span>
                     </div>
 
                 </button>
@@ -346,15 +339,12 @@
 
 
                     <div class="active-user-info">
-
-                        <strong id="activeChatName">
-                            VChat
-                        </strong>
-
-                        <span id="activeChatStatus">
-                            Select a conversation
-                        </span>
-
+                        <strong id="activeChatName">VChat</strong>
+                        <div class="active-user-sub">
+                            <span class="active-user-handle" id="activeChatHandle"></span>
+                            <span class="active-user-sep" id="activeChatSep" hidden>•</span>
+                            <span id="activeChatStatus">Select a conversation</span>
+                        </div>
                     </div>
 
                 </button>
@@ -724,6 +714,7 @@
                     Select a chat
                 </h2>
 
+                <div class="details-handle" id="detailsHandle" hidden></div>
 
                 <p id="detailsStatus">
                     Offline
@@ -853,7 +844,7 @@
             <div class="modal-header">
                 <div>
                     <span>NEW CONVERSATION</span>
-                    <h2 id="newChatTitle">Start a new chat</h2>
+                    <h2 id="newChatTitle">Search people</h2>
                 </div>
 
                 <button type="button" class="modal-close" id="closeNewChat" aria-label="Close modal">
@@ -862,29 +853,33 @@
             </div>
 
             <p class="modal-help">
-                Find a VChat user using their registered 10-digit mobile number.
+                Find people using their unique VChat @username or display name.
             </p>
 
-            <div class="modal-search">
+            <div class="modal-search new-chat-search-wrap">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input
-                    type="tel"
-                    id="newChatNumber"
-                    placeholder="Enter 10-digit mobile number"
-                    maxlength="15"
+                    type="search"
+                    id="newChatSearchInput"
+                    placeholder="Search by @username or name"
+                    maxlength="50"
                     autocomplete="off"
+                    aria-label="Search by username or name"
                 >
+                <button type="button" class="search-clear-btn" id="newChatClearSearchBtn" hidden aria-label="Clear search">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
             <div id="newChatValidation" class="modal-inline-error" hidden></div>
 
-            <button type="button" class="modal-action" id="findUserBtn">
-                <i class="fa-solid fa-user-plus"></i>
-                <span>Find VChat user</span>
-            </button>
+            <!-- Search Results Container -->
+            <div id="newChatResult" class="new-chat-result" style="display: none;"></div>
 
-            <!-- Search Result -->
-            <div id="newChatResult" class="new-chat-result" hidden></div>
+            <div class="new-chat-privacy-tip">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Your username lets people discover you without sharing your phone number or email.</span>
+            </div>
 
         </div>
     </div>
@@ -929,14 +924,54 @@
 
                 <!-- Name Field -->
                 <div class="profile-field-group">
-                    <label for="profileNameInput">Full Name</label>
+                    <label for="profileNameInput">Display Name</label>
                     <input
                         type="text"
                         id="profileNameInput"
-                        placeholder="Your full name"
+                        placeholder="Your display name"
                         maxlength="80"
                         autocomplete="name"
                     >
+                </div>
+
+                <!-- Unique Username Field -->
+                <div class="profile-field-group">
+                    <div class="profile-label-row">
+                        <label for="profileUsernameInput">Unique Username</label>
+                        <span class="profile-cooldown-badge" id="profileCooldownBadge">Available</span>
+                    </div>
+                    <div class="profile-username-input-wrap">
+                        <span class="username-at-addon">@</span>
+                        <input
+                            type="text"
+                            id="profileUsernameInput"
+                            placeholder="username"
+                            maxlength="20"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                        <span class="username-status-icon" id="usernameStatusIcon"></span>
+                    </div>
+                    <div class="username-feedback" id="profileUsernameFeedback" hidden></div>
+                    <p class="profile-field-help" id="profileCooldownNotice">
+                        Usernames can be changed once every 30 days.
+                    </p>
+                </div>
+
+                <!-- Username Actions Row -->
+                <div class="profile-identity-actions">
+                    <button type="button" class="profile-action-btn" id="copyUsernameBtn" title="Copy @username">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy @username</span>
+                    </button>
+                    <button type="button" class="profile-action-btn" id="shareProfileBtn" title="Share profile link">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>Share Link</span>
+                    </button>
+                    <button type="button" class="profile-action-btn" id="showQrBtn" title="Show QR Code">
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span>QR Code</span>
+                    </button>
                 </div>
 
                 <!-- About Field -->
@@ -958,7 +993,7 @@
                     </div>
 
                     <div class="profile-info-card">
-                        <span class="info-label">Mobile Number</span>
+                        <span class="info-label">Mobile Number (Private)</span>
                         <strong class="info-value" id="profileMobileRead">Not set</strong>
                     </div>
                 </div>
@@ -971,6 +1006,43 @@
 
             </div>
 
+        </div>
+    </div>
+
+    <!-- =========================================
+         QR CODE MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="qrModal" hidden role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="modal-card qr-card">
+            <div class="modal-header">
+                <div>
+                    <span>SHARE PROFILE</span>
+                    <h2 id="qrModalTitle">VChat QR Code</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeQrModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-user-preview">
+                    <div class="user-avatar avatar-green qr-preview-avatar" id="qrAvatar">
+                        <span id="qrInitials">VC</span>
+                    </div>
+                    <strong class="qr-display-name" id="qrDisplayName">Aryan Singh</strong>
+                    <span class="qr-username" id="qrUsername">@aryansingh</span>
+                </div>
+                <div class="qr-code-wrap">
+                    <div id="qrCodeContainer" class="qr-code-box"></div>
+                </div>
+                <p class="qr-hint">Scan with camera to connect on VChat</p>
+                <div class="qr-actions">
+                    <button type="button" class="modal-action qr-copy-btn" id="qrCopyLinkBtn">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy Profile Link</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1326,6 +1398,7 @@
     <script src="../js/supabase-client.js"></script>
     <script src="../js/validators.js"></script>
     <script src="../js/dom.js"></script>
+    <script src="../js/qr-generator.js"></script>
     <script src="chat.js"></script>
 
 </body>

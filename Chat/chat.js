@@ -91,6 +91,7 @@ const Els = {
     sidebarMenuButton: document.getElementById("sidebarMenuButton"),
     profileButton: document.getElementById("profileButton"),
     currentUserName: document.getElementById("currentUserName"),
+    currentUserHandle: document.getElementById("currentUserHandle"),
     currentUserInitials: document.getElementById("currentUserInitials"),
     logoutButton: document.getElementById("logoutButton"),
 
@@ -101,6 +102,8 @@ const Els = {
     activeChatInitials: document.getElementById("activeChatInitials"),
     activeChatOnlineDot: document.getElementById("activeChatOnlineDot"),
     activeChatName: document.getElementById("activeChatName"),
+    activeChatHandle: document.getElementById("activeChatHandle"),
+    activeChatSep: document.getElementById("activeChatSep"),
     activeChatStatus: document.getElementById("activeChatStatus"),
     videoCallButton: document.getElementById("videoCallButton"),
     audioCallButton: document.getElementById("audioCallButton"),
@@ -161,6 +164,7 @@ const Els = {
     detailsInitials: document.getElementById("detailsInitials"),
     detailsOnlineDot: document.getElementById("detailsOnlineDot"),
     detailsName: document.getElementById("detailsName"),
+    detailsHandle: document.getElementById("detailsHandle"),
     detailsStatus: document.getElementById("detailsStatus"),
     detailsCallBtn: document.getElementById("detailsCallBtn"),
     detailsVideoBtn: document.getElementById("detailsVideoBtn"),
@@ -177,9 +181,9 @@ const Els = {
     // Modals
     newChatModal: document.getElementById("newChatModal"),
     closeNewChat: document.getElementById("closeNewChat"),
-    newChatNumber: document.getElementById("newChatNumber"),
+    newChatSearchInput: document.getElementById("newChatSearchInput"),
+    newChatClearSearchBtn: document.getElementById("newChatClearSearchBtn"),
     newChatValidation: document.getElementById("newChatValidation"),
-    findUserBtn: document.getElementById("findUserBtn"),
     newChatResult: document.getElementById("newChatResult"),
     profileModal: document.getElementById("profileModal"),
     closeProfileModal: document.getElementById("closeProfileModal"),
@@ -187,6 +191,22 @@ const Els = {
     profileModalInitials: document.getElementById("profileModalInitials"),
     avatarFileInput: document.getElementById("avatarFileInput"),
     profileNameInput: document.getElementById("profileNameInput"),
+    profileUsernameInput: document.getElementById("profileUsernameInput"),
+    profileCooldownBadge: document.getElementById("profileCooldownBadge"),
+    usernameStatusIcon: document.getElementById("usernameStatusIcon"),
+    profileUsernameFeedback: document.getElementById("profileUsernameFeedback"),
+    profileCooldownNotice: document.getElementById("profileCooldownNotice"),
+    copyUsernameBtn: document.getElementById("copyUsernameBtn"),
+    shareProfileBtn: document.getElementById("shareProfileBtn"),
+    showQrBtn: document.getElementById("showQrBtn"),
+    qrModal: document.getElementById("qrModal"),
+    closeQrModal: document.getElementById("closeQrModal"),
+    qrDisplayName: document.getElementById("qrDisplayName"),
+    qrUsername: document.getElementById("qrUsername"),
+    qrAvatar: document.getElementById("qrAvatar"),
+    qrInitials: document.getElementById("qrInitials"),
+    qrCodeContainer: document.getElementById("qrCodeContainer"),
+    qrCopyLinkBtn: document.getElementById("qrCopyLinkBtn"),
     profileAboutInput: document.getElementById("profileAboutInput"),
     profileEmailRead: document.getElementById("profileEmailRead"),
     profileMobileRead: document.getElementById("profileMobileRead"),
@@ -420,18 +440,23 @@ async function requireSession() {
 
     const { data } = await AppState.client
         .from("profiles")
-        .select("id, full_name, display_name, name, about, bio, mobile, phone, email, avatar_url, last_seen_at, mobile_verified, mobile_verified_at, email_verified, email_verified_at")
+        .select("id, full_name, display_name, name, username, about, bio, mobile, phone, email, avatar_url, last_seen_at, mobile_verified, mobile_verified_at, email_verified, email_verified_at, username_changed_at, username_change_available_at")
         .eq("id", AppState.currentUser.id)
         .maybeSingle();
 
-    AppState.currentProfile = api.mapProfile(data) || {
+    const mapped = api.mapProfile(data) || {};
+    AppState.currentProfile = {
         id: AppState.currentUser.id,
-        name: AppState.currentUser.user_metadata?.full_name || AppState.currentUser.email,
-        about: "Hey there! I am using VChat.",
-        mobile: AppState.currentUser.user_metadata?.mobile || "",
+        name: mapped.name || data?.display_name || data?.full_name || AppState.currentUser.user_metadata?.full_name || "VChat User",
+        display_name: data?.display_name || data?.full_name || mapped.name || "VChat User",
+        username: data?.username || ("user_" + AppState.currentUser.id.slice(0, 5)),
+        about: data?.about || data?.bio || "Hey there! I am using VChat.",
+        mobile: data?.mobile || "",
         email: AppState.currentUser.email,
-        avatarUrl: "",
-        mobileVerified: false
+        avatarUrl: mapped.avatarUrl || data?.avatar_url || "",
+        username_changed_at: data?.username_changed_at || null,
+        username_change_available_at: data?.username_change_available_at || null,
+        mobileVerified: !!data?.mobile_verified
     };
 
     const isGoogle = !!(AppState.currentUser.app_metadata && AppState.currentUser.app_metadata.provider === "google");
@@ -443,11 +468,12 @@ async function requireSession() {
         throw new Error("unverified email");
     }
 
-    if (Els.currentUserName) Els.currentUserName.textContent = AppState.currentProfile.name;
-    if (Els.currentUserInitials) Els.currentUserInitials.textContent = Dom.initials(AppState.currentProfile.name);
+    if (Els.currentUserName) Els.currentUserName.textContent = AppState.currentProfile.display_name;
+    if (Els.currentUserHandle) Els.currentUserHandle.textContent = "@" + (AppState.currentProfile.username || "user");
+    if (Els.currentUserInitials) Els.currentUserInitials.textContent = Dom.initials(AppState.currentProfile.display_name);
     const avatarWrap = Els.profileButton && Els.profileButton.querySelector(".user-avatar");
     if (avatarWrap && AppState.currentProfile.avatarUrl) {
-        applyAvatar(avatarWrap, AppState.currentProfile.avatarUrl, AppState.currentProfile.name);
+        applyAvatar(avatarWrap, AppState.currentProfile.avatarUrl, AppState.currentProfile.display_name);
     }
     loadLocalPreferences();
 }
@@ -670,6 +696,10 @@ function showIdleThreadState() {
     if (Els.audioCallButton) Els.audioCallButton.disabled = true;
     if (Els.chatSearchButton) Els.chatSearchButton.disabled = true;
 
+    if (Els.activeChatHandle) Els.activeChatHandle.textContent = "";
+    if (Els.activeChatSep) Els.activeChatSep.hidden = true;
+    if (Els.detailsHandle) Els.detailsHandle.hidden = true;
+
     updateDetails(null);
     cancelVoiceRecording();
 }
@@ -693,11 +723,32 @@ async function openConversation(id) {
     AppState.activePeer = {
         id: row.peer_id,
         name: row.peer_name || row.title || "Chat",
+        username: row.peer_username || "",
         about: row.peer_about,
         avatarUrl: row.peer_avatar,
         lastSeenAt: row.peer_last_seen,
         isGroup: !!row.is_group
     };
+
+    if (row.peer_id && !row.peer_username) {
+        AppState.client
+            .from("profiles")
+            .select("username")
+            .eq("id", row.peer_id)
+            .maybeSingle()
+            .then(({ data }) => {
+                if (data?.username && AppState.activePeer && AppState.activePeer.id === row.peer_id) {
+                    AppState.activePeer.username = data.username;
+                    if (Els.activeChatHandle) Els.activeChatHandle.textContent = "@" + data.username;
+                    if (Els.activeChatSep) Els.activeChatSep.hidden = false;
+                    if (Els.detailsHandle) {
+                        Els.detailsHandle.textContent = "@" + data.username;
+                        Els.detailsHandle.hidden = false;
+                    }
+                }
+            })
+            .catch(() => {});
+    }
     AppState.oldestCursor = null;
     AppState.hasMore = true;
     AppState.replyingTo = null;
@@ -737,6 +788,12 @@ async function openConversation(id) {
     if (Els.secureNotice) Els.secureNotice.hidden = false;
 
     if (Els.activeChatName) Els.activeChatName.textContent = AppState.activePeer.name;
+    if (Els.activeChatHandle) {
+        Els.activeChatHandle.textContent = AppState.activePeer.username ? "@" + AppState.activePeer.username : "";
+    }
+    if (Els.activeChatSep) {
+        Els.activeChatSep.hidden = !AppState.activePeer.username;
+    }
     if (Els.activeUserButton) {
         const av = Els.activeUserButton.querySelector(".user-avatar");
         if (av) {
@@ -2316,6 +2373,14 @@ function updateDetails(peer) {
     }
 
     if (Els.detailsName) Els.detailsName.textContent = peer.name;
+    if (Els.detailsHandle) {
+        if (peer.username) {
+            Els.detailsHandle.textContent = "@" + peer.username;
+            Els.detailsHandle.hidden = false;
+        } else {
+            Els.detailsHandle.hidden = true;
+        }
+    }
     const isOnline = peer.id && AppState.onlinePeers.has(peer.id);
     if (Els.detailsStatus) {
         Els.detailsStatus.textContent = isOnline ? "Online" : (peer.lastSeenAt ? "Last seen " + Dom.formatTime(peer.lastSeenAt) : "Offline");
@@ -2349,22 +2414,187 @@ function openReportModal() {
 
 function openProfileEditor() {
     if (!Els.profileModal) return;
-    if (Els.profileNameInput) Els.profileNameInput.value = AppState.currentProfile.name || "";
+    if (Els.profileNameInput) Els.profileNameInput.value = AppState.currentProfile.display_name || AppState.currentProfile.name || "";
+    if (Els.profileUsernameInput) Els.profileUsernameInput.value = AppState.currentProfile.username || "";
     if (Els.profileAboutInput) Els.profileAboutInput.value = AppState.currentProfile.about || "";
     if (Els.profileEmailRead) Els.profileEmailRead.textContent = AppState.currentProfile.email || AppState.currentUser.email;
-    if (Els.profileMobileRead) Els.profileMobileRead.textContent = AppState.currentProfile.mobile ? "+91 " + AppState.currentProfile.mobile : "Not set";
-    if (Els.profileModalAvatar) applyAvatar(Els.profileModalAvatar, AppState.currentProfile.avatarUrl, AppState.currentProfile.name);
+    if (Els.profileMobileRead) Els.profileMobileRead.textContent = AppState.currentProfile.mobile ? "+91 " + AppState.currentProfile.mobile : "Private";
+    if (Els.profileModalAvatar) applyAvatar(Els.profileModalAvatar, AppState.currentProfile.avatarUrl, AppState.currentProfile.display_name);
+
+    if (Els.profileUsernameFeedback) {
+        Els.profileUsernameFeedback.hidden = true;
+        Els.profileUsernameFeedback.textContent = "";
+        Els.profileUsernameFeedback.className = "username-feedback";
+    }
+    if (Els.usernameStatusIcon) Els.usernameStatusIcon.innerHTML = "";
+
+    // 30-Day Cooldown Check
+    const availableAt = AppState.currentProfile.username_change_available_at ? new Date(AppState.currentProfile.username_change_available_at) : null;
+    const isCooldown = availableAt && Date.now() < availableAt.getTime();
+    if (Els.profileCooldownBadge) {
+        Els.profileCooldownBadge.className = isCooldown ? "profile-cooldown-badge cooldown" : "profile-cooldown-badge available";
+        Els.profileCooldownBadge.textContent = isCooldown ? "Cooldown" : "Available";
+    }
+    if (Els.profileCooldownNotice) {
+        if (isCooldown) {
+            const diffDays = Math.ceil((availableAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            Els.profileCooldownNotice.textContent = `You can change your username again in ${diffDays} day${diffDays === 1 ? "" : "s"} (${availableAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}).`;
+        } else {
+            Els.profileCooldownNotice.textContent = "Usernames can be changed once every 30 days.";
+        }
+    }
+
     Els.profileModal.hidden = false;
 }
+
+let usernameCheckTimer = null;
+function handleUsernameInputChange() {
+    const rawVal = Els.profileUsernameInput?.value || "";
+    const clean = V.normalizeUsername(rawVal);
+    if (Els.profileUsernameFeedback) {
+        Els.profileUsernameFeedback.hidden = true;
+        Els.profileUsernameFeedback.className = "username-feedback";
+        Els.profileUsernameFeedback.textContent = "";
+    }
+    if (Els.usernameStatusIcon) Els.usernameStatusIcon.innerHTML = "";
+
+    if (!clean) return;
+
+    const validation = V.validateUsername(clean);
+    if (!validation.ok) {
+        if (Els.profileUsernameFeedback) {
+            Els.profileUsernameFeedback.hidden = false;
+            Els.profileUsernameFeedback.className = "username-feedback invalid";
+            Els.profileUsernameFeedback.textContent = validation.error;
+        }
+        if (Els.usernameStatusIcon) {
+            Els.usernameStatusIcon.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color:#FFA726"></i>`;
+        }
+        return;
+    }
+
+    if (clean === (AppState.currentProfile.username || "").toLowerCase()) {
+        if (Els.usernameStatusIcon) {
+            Els.usernameStatusIcon.innerHTML = `<i class="fa-solid fa-check" style="color:var(--green-bright)"></i>`;
+        }
+        return;
+    }
+
+    // Check 30-day cooldown status
+    const availableAt = AppState.currentProfile.username_change_available_at ? new Date(AppState.currentProfile.username_change_available_at) : null;
+    if (availableAt && Date.now() < availableAt.getTime()) {
+        const diffDays = Math.ceil((availableAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (Els.profileUsernameFeedback) {
+            Els.profileUsernameFeedback.hidden = false;
+            Els.profileUsernameFeedback.className = "username-feedback cooldown";
+            Els.profileUsernameFeedback.textContent = `Username change cooldown active (available in ${diffDays} days).`;
+        }
+        if (Els.usernameStatusIcon) {
+            Els.usernameStatusIcon.innerHTML = `<i class="fa-solid fa-clock" style="color:#FF9800"></i>`;
+        }
+        return;
+    }
+
+    if (Els.usernameStatusIcon) {
+        Els.usernameStatusIcon.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="color:var(--muted)"></i>`;
+    }
+
+    clearTimeout(usernameCheckTimer);
+    usernameCheckTimer = setTimeout(async () => {
+        try {
+            const { data, error } = await AppState.client.rpc("check_username_available", { p_username: clean });
+            if (!error && data) {
+                showUsernameAvailability(data.available, data.available ? "Username is available" : (data.error || "That username is already taken."));
+                return;
+            }
+
+            // Fallback direct query on profiles
+            const { count } = await AppState.client
+                .from("profiles")
+                .select("id", { count: "exact", head: true })
+                .eq("username", clean)
+                .neq("id", AppState.currentUser.id);
+            const isAvail = count === 0;
+            showUsernameAvailability(isAvail, isAvail ? "Username is available" : "That username is already taken.");
+        } catch {
+            /* ignore network glitch during typing */
+        }
+    }, 300);
+}
+
+function showUsernameAvailability(isAvailable, message) {
+    if (Els.profileUsernameFeedback) {
+        Els.profileUsernameFeedback.hidden = false;
+        Els.profileUsernameFeedback.className = "username-feedback " + (isAvailable ? "available" : "taken");
+        Els.profileUsernameFeedback.textContent = (isAvailable ? "✓ " : "✕ ") + message;
+    }
+    if (Els.usernameStatusIcon) {
+        Els.usernameStatusIcon.innerHTML = isAvailable
+            ? `<i class="fa-solid fa-circle-check" style="color:var(--green-bright)"></i>`
+            : `<i class="fa-solid fa-circle-xmark" style="color:#FF5252"></i>`;
+    }
+}
+
+function copyUsername() {
+    const handle = "@" + (AppState.currentProfile.username || "vchat");
+    navigator.clipboard.writeText(handle).then(() => {
+        showToast("Username copied (" + handle + ")", "fa-regular fa-copy");
+    }).catch(() => {
+        showToast("Could not copy to clipboard", "fa-solid fa-triangle-exclamation");
+    });
+}
+
+function shareProfileLink() {
+    const username = AppState.currentProfile.username;
+    if (!username) return;
+    const url = `${window.location.origin}/u/${encodeURIComponent(username)}`;
+    if (navigator.share) {
+        navigator.share({
+            title: `Chat with ${AppState.currentProfile.display_name} on VChat`,
+            text: `Connect with me on VChat: @${username}`,
+            url
+        }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast("Profile link copied to clipboard!", "fa-solid fa-link");
+        }).catch(() => {
+            showToast(url, "fa-solid fa-link");
+        });
+    }
+}
+
+function openQrModal() {
+    if (!Els.qrModal) return;
+    const username = AppState.currentProfile.username || "user";
+    const displayName = AppState.currentProfile.display_name || "VChat User";
+    const profileUrl = `${window.location.origin}/u/${encodeURIComponent(username)}`;
+
+    if (Els.qrDisplayName) Els.qrDisplayName.textContent = displayName;
+    if (Els.qrUsername) Els.qrUsername.textContent = "@" + username;
+    if (Els.qrAvatar) applyAvatar(Els.qrAvatar, AppState.currentProfile.avatarUrl, displayName);
+    if (Els.qrCodeContainer && window.VChatQr) {
+        window.VChatQr.renderQr(profileUrl, Els.qrCodeContainer);
+    }
+    Els.qrModal.hidden = false;
+}
+
+function closeQrModal() {
+    if (Els.qrModal) Els.qrModal.hidden = true;
+}
+
+// --------------------------------------------------------------------------
+// User Discovery Search in New Conversation Modal
+// --------------------------------------------------------------------------
 
 function openNewChatModal() {
     if (!Els.newChatModal) return;
     Els.newChatModal.hidden = false;
     clearNewChatFeedback();
-    if (Els.newChatNumber) {
-        Els.newChatNumber.value = "";
-        setTimeout(() => Els.newChatNumber.focus(), 60);
+    if (Els.newChatSearchInput) {
+        Els.newChatSearchInput.value = "";
+        setTimeout(() => Els.newChatSearchInput.focus(), 60);
     }
+    if (Els.newChatClearSearchBtn) Els.newChatClearSearchBtn.hidden = true;
 }
 
 function closeNewChatModal() {
@@ -2382,51 +2612,85 @@ function clearNewChatFeedback() {
         Dom.clear(Els.newChatResult);
         Els.newChatResult.style.display = "none";
     }
-    if (Els.findUserBtn) {
-        Els.findUserBtn.disabled = false;
-        Els.findUserBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Find VChat user</span>`;
-    }
 }
 
-async function findVChatUser() {
-    const entered = V.normalizeMobile(Els.newChatNumber?.value || "");
-    if (!entered) return setModalError("Please enter a mobile number.");
-    if (!V.isValidMobile(entered)) return setModalError("Please enter a valid 10-digit Indian mobile number.");
-    if (entered === V.normalizeMobile(AppState.currentProfile.mobile)) return setModalError("That is your own number.");
+let searchPeopleDebounceTimer = null;
+function debouncedSearchPeople() {
+    clearTimeout(searchPeopleDebounceTimer);
+    searchPeopleDebounceTimer = setTimeout(searchPeople, 280);
+}
 
-    Els.findUserBtn.disabled = true;
-    Els.findUserBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Searching...</span>`;
+async function searchPeople() {
+    const raw = Els.newChatSearchInput?.value || "";
+    const query = raw.trim();
+    if (!query) {
+        clearNewChatFeedback();
+        return;
+    }
+    if (query.length < 2) {
+        setModalError("Please enter at least 2 characters.");
+        return;
+    }
+
+    if (Els.newChatValidation) Els.newChatValidation.hidden = true;
+    Els.newChatResult.hidden = false;
+    Els.newChatResult.style.display = "block";
+    Els.newChatResult.innerHTML = `<div class="user-not-found"><i class="fa-solid fa-spinner fa-spin"></i> Searching...</div>`;
 
     try {
-        const { data, error } = await AppState.client.rpc("lookup_user_by_mobile", { p_mobile: entered });
-        if (error) throw error;
-        const user = Array.isArray(data) ? data[0] : data;
-        Els.newChatResult.hidden = false;
-        Els.newChatResult.style.display = "block";
-        Dom.clear(Els.newChatResult);
+        let users = [];
+        // 1. Try search_users_by_username RPC
+        const { data, error } = await AppState.client.rpc("search_users_by_username", { p_query: query, p_limit: 15 });
+        if (!error && Array.isArray(data)) {
+            users = data;
+        } else {
+            // 2. Direct profiles fallback
+            const cleanQ = query.replace(/^@/, "").toLowerCase();
+            const { data: profs, error: pErr } = await AppState.client
+                .from("profiles")
+                .select("id, username, display_name, full_name, name, avatar_url, about, bio")
+                .neq("id", AppState.currentUser.id)
+                .or(`username.ilike.%${cleanQ}%,display_name.ilike.%${cleanQ}%,full_name.ilike.%${cleanQ}%`)
+                .limit(15);
+            if (pErr) throw pErr;
+            users = (profs || [])
+                .filter(u => !AppState.blockedIds.has(u.id))
+                .map(u => ({
+                    id: u.id,
+                    username: u.username || "",
+                    display_name: u.display_name || u.full_name || u.name || "VChat User",
+                    avatar_url: u.avatar_url,
+                    about: u.about || u.bio || "Available on VChat"
+                }));
+        }
 
-        if (!user) {
-            Els.newChatResult.innerHTML = `<div class="user-not-found">No verified VChat account found with +91 ${entered}.</div>`;
+        Dom.clear(Els.newChatResult);
+        if (users.length === 0) {
+            Els.newChatResult.innerHTML = `<div class="user-not-found">No people found matching "${Dom.escape(query)}".</div>`;
             return;
         }
 
-        const card = document.createElement("div");
-        card.className = "user-found-card";
-        card.innerHTML = `
-            <div class="user-found-avatar ${Dom.avatarClass(user.display_name)}">${Dom.initials(user.display_name)}</div>
-            <div class="user-found-info">
-                <div class="user-found-name">${Dom.escape(user.display_name)}</div>
-                <div class="user-found-number">+91 ${Dom.escape(user.mobile)} • ${Dom.escape(user.about || "VChat User")}</div>
-            </div>
-            <button type="button" class="start-chat-btn">Start Chat</button>
-        `;
-        card.querySelector(".start-chat-btn").addEventListener("click", () => startNewChat(user));
-        Els.newChatResult.appendChild(card);
+        users.forEach((user) => {
+            const displayName = user.display_name || "VChat User";
+            const handle = user.username ? `@${user.username}` : "";
+            const card = document.createElement("div");
+            card.className = "user-found-card";
+            card.innerHTML = `
+                <div class="user-found-avatar ${Dom.avatarClass(displayName)}">${Dom.initials(displayName)}</div>
+                <div class="user-found-info">
+                    <div class="user-found-name">
+                        <span>${Dom.escape(displayName)}</span>
+                        ${handle ? `<span class="user-found-handle">${Dom.escape(handle)}</span>` : ""}
+                    </div>
+                    <div class="user-found-about">${Dom.escape(user.about || "Available on VChat")}</div>
+                </div>
+                <button type="button" class="start-chat-btn"><i class="fa-solid fa-comment-dots"></i> Start Chat</button>
+            `;
+            card.addEventListener("click", () => startNewChat(user));
+            Els.newChatResult.appendChild(card);
+        });
     } catch (err) {
         setModalError(err.message || "Search failed.");
-    } finally {
-        Els.findUserBtn.disabled = false;
-        Els.findUserBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Find VChat user</span>`;
     }
 }
 
@@ -2438,12 +2702,38 @@ function setModalError(msg) {
 }
 
 async function startNewChat(user) {
+    if (!user || !user.id) return;
+    if (AppState.blockedIds.has(user.id)) {
+        return showToast("Cannot start chat with blocked contact.", "fa-solid fa-ban");
+    }
     closeNewChatModal();
     const { data, error } = await AppState.client.rpc("get_or_create_direct_conversation", { p_other_id: user.id });
     if (error) return showToast(error.message, "fa-solid fa-triangle-exclamation");
     await loadConversations();
     await openConversation(data);
-    showToast("Chat created with " + user.display_name, "fa-solid fa-circle-check");
+    showToast("Chat opened with " + (user.display_name || user.name || "user"), "fa-solid fa-circle-check");
+}
+
+async function checkDirectProfileUrl() {
+    const params = new URLSearchParams(window.location.search);
+    let targetUsername = params.get("u") || params.get("user") || "";
+    if (!targetUsername && window.location.pathname.startsWith("/u/")) {
+        targetUsername = window.location.pathname.split("/u/")[1]?.split("/")[0] || "";
+    }
+    if (!targetUsername) return;
+
+    targetUsername = V.normalizeUsername(targetUsername);
+    if (!targetUsername) return;
+
+    try {
+        const { data } = await AppState.client.rpc("get_public_profile_by_username", { p_username: targetUsername });
+        const user = Array.isArray(data) ? data[0] : data;
+        if (user && user.id && user.id !== AppState.currentUser.id) {
+            await startNewChat(user);
+        }
+    } catch {
+        /* ignore invalid url lookup */
+    }
 }
 
 // ==========================================================================
@@ -2846,36 +3136,97 @@ function bindEventListeners() {
     if (Els.closeNewChat) Els.closeNewChat.addEventListener("click", closeNewChatModal);
     if (Els.startFirstChatBtn) Els.startFirstChatBtn.addEventListener("click", openNewChatModal);
     if (Els.heroStartChatBtn) Els.heroStartChatBtn.addEventListener("click", openNewChatModal);
-    if (Els.findUserBtn) Els.findUserBtn.addEventListener("click", findVChatUser);
 
-    if (Els.newChatNumber) {
-        Els.newChatNumber.addEventListener("keydown", (e) => {
+    // New Chat Username Discovery Search
+    if (Els.newChatSearchInput) {
+        Els.newChatSearchInput.addEventListener("input", () => {
+            if (Els.newChatClearSearchBtn) {
+                Els.newChatClearSearchBtn.hidden = !Els.newChatSearchInput.value.trim();
+            }
+            debouncedSearchPeople();
+        });
+        Els.newChatSearchInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                findVChatUser();
+                searchPeople();
             }
         });
     }
+    if (Els.newChatClearSearchBtn) {
+        Els.newChatClearSearchBtn.addEventListener("click", () => {
+            if (Els.newChatSearchInput) Els.newChatSearchInput.value = "";
+            Els.newChatClearSearchBtn.hidden = true;
+            clearNewChatFeedback();
+            Els.newChatSearchInput.focus();
+        });
+    }
+
+    // Profile Settings Live Username Validation & Identity Actions
+    if (Els.profileUsernameInput) {
+        Els.profileUsernameInput.addEventListener("input", handleUsernameInputChange);
+    }
+    if (Els.copyUsernameBtn) Els.copyUsernameBtn.addEventListener("click", copyUsername);
+    if (Els.shareProfileBtn) Els.shareProfileBtn.addEventListener("click", shareProfileLink);
+    if (Els.showQrBtn) Els.showQrBtn.addEventListener("click", openQrModal);
+    if (Els.closeQrModal) Els.closeQrModal.addEventListener("click", closeQrModal);
+    if (Els.qrCopyLinkBtn) Els.qrCopyLinkBtn.addEventListener("click", shareProfileLink);
 
     // Profile Save
     if (Els.saveProfileBtn) {
         Els.saveProfileBtn.addEventListener("click", async () => {
-            const name = Els.profileNameInput?.value || "";
-            const about = Els.profileAboutInput?.value || "";
-            if (!V.isValidName(name)) return showToast("Name must be 2–80 characters.", "fa-solid fa-triangle-exclamation");
+            const name = (Els.profileNameInput?.value || "").trim();
+            const about = (Els.profileAboutInput?.value || "").trim();
+            const targetUsername = V.normalizeUsername(Els.profileUsernameInput?.value || "");
+            const currentUsername = (AppState.currentProfile.username || "").toLowerCase();
 
+            if (!V.isValidName(name)) return showToast("Display name must be 2–80 characters.", "fa-solid fa-triangle-exclamation");
+
+            // Handle username update if changed
+            if (targetUsername && targetUsername !== currentUsername) {
+                const vCheck = V.validateUsername(targetUsername);
+                if (!vCheck.ok) return showToast(vCheck.error, "fa-solid fa-triangle-exclamation");
+
+                const availableAt = AppState.currentProfile.username_change_available_at ? new Date(AppState.currentProfile.username_change_available_at) : null;
+                if (availableAt && Date.now() < availableAt.getTime()) {
+                    const diffDays = Math.ceil((availableAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                    return showToast(`Username change available in ${diffDays} day${diffDays === 1 ? "" : "s"}.`, "fa-solid fa-clock");
+                }
+
+                const confirmed = window.confirm(`Change username to @${targetUsername}?\nYou can change your username again after 30 days.`);
+                if (!confirmed) return;
+
+                const { data: uData, error: uErr } = await AppState.client.rpc("update_user_username", { p_new_username: targetUsername });
+                if (uErr || (uData && !uData.success)) {
+                    const msg = uErr ? uErr.message : (uData ? uData.error : "Failed to update username");
+                    return showToast(msg, "fa-solid fa-triangle-exclamation");
+                }
+                if (uData) {
+                    AppState.currentProfile.username = uData.username;
+                    AppState.currentProfile.username_changed_at = uData.username_changed_at;
+                    AppState.currentProfile.username_change_available_at = uData.username_change_available_at;
+                }
+            }
+
+            // Update display name and bio
             const { data, error } = await AppState.client.rpc("update_my_profile", {
-                p_full_name: name.trim(),
+                p_full_name: name,
                 p_about: about,
                 p_avatar_url: AppState.currentProfile.avatarUrl || null
             });
             if (error) return showToast(error.message, "fa-solid fa-triangle-exclamation");
 
-            AppState.currentProfile = api.mapProfile(data) || AppState.currentProfile;
-            if (Els.currentUserName) Els.currentUserName.textContent = AppState.currentProfile.name;
-            if (Els.currentUserInitials) Els.currentUserInitials.textContent = Dom.initials(AppState.currentProfile.name);
+            const mapped = api.mapProfile(data);
+            AppState.currentProfile.display_name = name;
+            AppState.currentProfile.name = name;
+            AppState.currentProfile.about = about;
+            if (mapped?.username) AppState.currentProfile.username = mapped.username;
+
+            if (Els.currentUserName) Els.currentUserName.textContent = AppState.currentProfile.display_name;
+            if (Els.currentUserHandle) Els.currentUserHandle.textContent = "@" + AppState.currentProfile.username;
+            if (Els.currentUserInitials) Els.currentUserInitials.textContent = Dom.initials(AppState.currentProfile.display_name);
             const avatarWrap = Els.profileButton?.querySelector(".user-avatar");
-            if (avatarWrap) applyAvatar(avatarWrap, AppState.currentProfile.avatarUrl, AppState.currentProfile.name);
+            if (avatarWrap) applyAvatar(avatarWrap, AppState.currentProfile.avatarUrl, AppState.currentProfile.display_name);
+
             Els.profileModal.hidden = true;
             showToast("Profile updated successfully.", "fa-solid fa-circle-check");
         });
@@ -2964,6 +3315,7 @@ function bindEventListeners() {
         if (e.key === "Escape") {
             if (AppState.lightbox.active) return closeLightbox();
             if (AppState.call.active) return endCall();
+            if (Els.qrModal && !Els.qrModal.hidden) return closeQrModal();
             if (Els.commandPaletteModal && !Els.commandPaletteModal.hidden) return (Els.commandPaletteModal.hidden = true);
             if (Els.profileModal && !Els.profileModal.hidden) return (Els.profileModal.hidden = true);
             if (Els.newChatModal && !Els.newChatModal.hidden) return closeNewChatModal();
@@ -3049,6 +3401,7 @@ function bindEventListeners() {
         if (AppState.conversations.length > 0) {
             await openConversation(AppState.conversations[0].conversation_id);
         }
+        await checkDirectProfileUrl();
         updateConnectionBanner(navigator.onLine ? "online" : "offline");
     } catch (err) {
         if (err && err.message === "no session") return;

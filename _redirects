@@ -1,0 +1,7 @@
+# Cloudflare Pages Redirects and Rewrites
+/u/* /Chat/chat.html 200
+/chat /Chat/chat.html 301
+/auth /Auth/login-signup.html 301
+/confirm /Auth/confirm.html 301
+/about /About/about.html 301
+/info /info/info.html 301

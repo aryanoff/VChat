@@ -12,8 +12,19 @@ Follow these steps to set up the Supabase backend for VChat.
 
 ## Database & Schema
 
-1. **Database Schema**: Execute the migration SQL files located in `supabase/migrations/` via the Supabase SQL Editor.
-2. **Row Level Security (RLS)**: Ensure RLS is enabled on all tables (`profiles`, `conversations`, `messages`, etc.). The migration files should automatically configure these.
+1. **Database Schema**: Execute the migration SQL files located in `supabase/migrations/` via the Supabase SQL Editor in order:
+   - `20260408_vchat_complete_schema.sql`: Base tables (`profiles`, `conversations`, `conversation_members`, `messages`, `message_reads`, `attachments`, `blocked_users`, `notifications`, `contact_submissions`), helper functions, and RLS policies.
+   - `20261006_vchat_username_identity.sql`: Production username system migration:
+     - Adds `username`, `username_changed_at`, `username_change_available_at` columns to `profiles`.
+     - Adds case-insensitive unique functional index on `lower(username)`.
+     - Sets up `reserved_usernames` and `username_history` reservation tables.
+     - Performs automatic backfill for existing users without usernames.
+     - Adds RPC `check_username_available(p_username)`.
+     - Adds RPC `update_user_username(p_new_username)` with atomic 30-day cooldown enforcement.
+     - Adds privacy-safe discovery RPC `search_users_by_username(p_query, p_limit)` (never exposes phone/email).
+     - Updates `handle_new_user()` trigger to automatically assign unique usernames on signup.
+     - Drops deprecated `public.lookup_user_by_mobile(text)`.
+2. **Row Level Security (RLS)**: Ensure RLS is enabled on all tables. The migration files automatically configure secure policies. Profile search exposes only public projection (`id`, `username`, `display_name`, `avatar_url`, `about`).
 
 ## Authentication
 

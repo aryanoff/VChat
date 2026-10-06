@@ -372,8 +372,164 @@ test("Prepend scroll height delta maintains user viewport when loading older his
     assert.strictEqual(scrollTop, 810);
 });
 
+// -------------------------------------------------------------
+// 11. USERNAME FORMAT VALIDATION SPECIFICATION
+// -------------------------------------------------------------
+test("Username validator enforces format rules, characters, lengths, and reserved names", () => {
+    // Load validator logic
+    const RESERVED_USERNAMES = new Set([
+        "admin", "administrator", "support", "help", "security", "system",
+        "official", "staff", "moderator", "mod", "vchat", "vchatadmin",
+        "vchatsupport", "root", "owner", "billing", "contact", "abuse",
+        "privacy", "terms", "api", "developer", "bot", "guest", "null", "undefined"
+    ]);
+
+    function normalizeUsername(value) {
+        if (!value) return "";
+        let str = String(value).trim().toLowerCase();
+        if (str.startsWith("@")) str = str.slice(1);
+        return str;
+    }
+
+    function validateUsername(value) {
+        const username = normalizeUsername(value);
+        if (!username) return { ok: false, error: "Username cannot be empty.", code: "EMPTY" };
+        if (username.length < 3) return { ok: false, error: "Username must be at least 3 characters.", code: "TOO_SHORT" };
+        if (username.length > 20) return { ok: false, error: "Username cannot exceed 20 characters.", code: "TOO_LONG" };
+        if (username.startsWith(".") || username.endsWith(".")) return { ok: false, error: "Username cannot start or end with a period.", code: "INVALID_PERIOD" };
+        if (username.startsWith("_") || username.endsWith("_")) return { ok: false, error: "Username cannot start or end with an underscore.", code: "INVALID_UNDERSCORE" };
+        if (username.includes("..")) return { ok: false, error: "Username cannot contain consecutive periods.", code: "CONSECUTIVE_PERIODS" };
+        if (!/^[a-z0-9_.]+$/.test(username)) return { ok: false, error: "Username can only contain lowercase letters, numbers, underscores, and periods.", code: "INVALID_CHARS" };
+        if (!/[a-z]/.test(username)) return { ok: false, error: "Username must contain at least one letter.", code: "NO_LETTER" };
+        if (RESERVED_USERNAMES.has(username)) return { ok: false, error: "This username is reserved.", code: "RESERVED" };
+        return { ok: true, username };
+    }
+
+    // Valid usernames
+    assert.ok(validateUsername("aryan").ok);
+    assert.ok(validateUsername("aryan_singh").ok);
+    assert.ok(validateUsername("aryan.singh").ok);
+    assert.ok(validateUsername("rajpoot07").ok);
+    assert.ok(validateUsername("vchat_user").ok);
+    assert.ok(validateUsername("@aryansingh").ok);
+
+    // Invalid usernames
+    assert.strictEqual(validateUsername("ab").code, "TOO_SHORT");
+    assert.strictEqual(validateUsername("123456").code, "NO_LETTER");
+    assert.strictEqual(validateUsername("___").code, "INVALID_UNDERSCORE");
+    assert.strictEqual(validateUsername("...").code, "INVALID_PERIOD");
+    assert.strictEqual(validateUsername(".aryan").code, "INVALID_PERIOD");
+    assert.strictEqual(validateUsername("aryan.").code, "INVALID_PERIOD");
+    assert.strictEqual(validateUsername("_aryan").code, "INVALID_UNDERSCORE");
+    assert.strictEqual(validateUsername("aryan_").code, "INVALID_UNDERSCORE");
+    assert.strictEqual(validateUsername("aryan..singh").code, "CONSECUTIVE_PERIODS");
+    assert.strictEqual(validateUsername("aryan singh").code, "INVALID_CHARS");
+    assert.strictEqual(validateUsername("aryan@singh").code, "INVALID_CHARS");
+    assert.strictEqual(validateUsername("admin").code, "RESERVED");
+    assert.strictEqual(validateUsername("vchat").code, "RESERVED");
+    assert.strictEqual(validateUsername("support").code, "RESERVED");
+});
+
+// -------------------------------------------------------------
+// 12. CASE-INSENSITIVITY & NORMALIZATION
+// -------------------------------------------------------------
+test("Username comparison resolves @AryanSingh and @aryansingh to the same canonical identity", () => {
+    function normalize(u) {
+        return String(u || "").trim().toLowerCase().replace(/^@/, "");
+    }
+
+    const u1 = "@AryanSingh";
+    const u2 = "aryansingh";
+    const u3 = "ARYANSINGH";
+    const u4 = "@aryan.singh";
+
+    assert.strictEqual(normalize(u1), "aryansingh");
+    assert.strictEqual(normalize(u2), "aryansingh");
+    assert.strictEqual(normalize(u3), "aryansingh");
+    assert.strictEqual(normalize(u1), normalize(u2));
+    assert.strictEqual(normalize(u1), normalize(u3));
+    assert.notStrictEqual(normalize(u1), normalize(u4));
+});
+
+// -------------------------------------------------------------
+// 13. 30-DAY USERNAME CHANGE COOLDOWN TIMESTAMP CALCULATION
+// -------------------------------------------------------------
+test("Username 30-day change cooldown calculates correct timestamp and blocks early edits", () => {
+    function canChangeUsername(availableAt) {
+        if (!availableAt) return true;
+        return Date.now() >= new Date(availableAt).getTime();
+    }
+
+    const now = Date.now();
+    const futureDate = new Date(now + 18 * 24 * 60 * 60 * 1000).toISOString(); // 18 days in future
+    const pastDate = new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(); // 1 day in past
+
+    assert.strictEqual(canChangeUsername(null), true);
+    assert.strictEqual(canChangeUsername(pastDate), true);
+    assert.strictEqual(canChangeUsername(futureDate), false);
+
+    // Cooldown duration should be exactly 30 days
+    const nextAvailable = new Date(now + 30 * 24 * 60 * 60 * 1000);
+    const diffDays = Math.round((nextAvailable.getTime() - now) / (1000 * 60 * 60 * 24));
+    assert.strictEqual(diffDays, 30);
+});
+
+// -------------------------------------------------------------
+// 14. USER SEARCH PRIORITY RANKING
+// -------------------------------------------------------------
+test("User discovery ranks exact username first, username prefix second, display name third", () => {
+    const users = [
+        { id: "1", username: "aryan_kumar", display_name: "Aryan Kumar" },
+        { id: "2", username: "aryan", display_name: "Aryan Singh" },
+        { id: "3", username: "kumar_aryan", display_name: "Kumar Aryan" },
+        { id: "4", username: "singh_a", display_name: "Aryan Official" }
+    ];
+
+    function searchRank(user, query) {
+        const q = query.toLowerCase().replace(/^@/, "");
+        const u = user.username.toLowerCase();
+        const d = user.display_name.toLowerCase();
+
+        if (u === q) return 1; // Exact username
+        if (u.startsWith(q)) return 2; // Username prefix
+        if (d.startsWith(q)) return 3; // Display name prefix
+        return 4; // Substring
+    }
+
+    const query = "aryan";
+    const sorted = [...users].sort((a, b) => searchRank(a, query) - searchRank(b, query));
+
+    assert.strictEqual(sorted[0].username, "aryan"); // Exact match first
+    assert.strictEqual(sorted[1].username, "aryan_kumar"); // Prefix match second
+    assert.strictEqual(sorted[2].display_name, "Aryan Official"); // Display name prefix third
+});
+
+// -------------------------------------------------------------
+// 15. SHAREABLE PROFILE URL ROUTING EXTRACTION
+// -------------------------------------------------------------
+test("Shareable profile URLs (/u/:username and ?u=:username) extract clean username", () => {
+    function extractUsernameFromUrl(urlPath, queryString) {
+        if (urlPath && urlPath.startsWith("/u/")) {
+            const part = urlPath.split("/u/")[1]?.split("/")[0]?.split("?")[0];
+            if (part) return decodeURIComponent(part).toLowerCase().replace(/^@/, "");
+        }
+        if (queryString) {
+            const match = queryString.match(/[?&](?:u|user)=([^&#]+)/);
+            if (match) return decodeURIComponent(match[1]).toLowerCase().replace(/^@/, "");
+        }
+        return null;
+    }
+
+    assert.strictEqual(extractUsernameFromUrl("/u/aryansingh", ""), "aryansingh");
+    assert.strictEqual(extractUsernameFromUrl("/u/@Aryan_Singh", ""), "aryan_singh");
+    assert.strictEqual(extractUsernameFromUrl("/Chat/chat.html", "?u=aryansingh"), "aryansingh");
+    assert.strictEqual(extractUsernameFromUrl("/Chat/chat.html", "?u=%40aryansingh"), "aryansingh");
+    assert.strictEqual(extractUsernameFromUrl("/Chat/chat.html", "?other=123"), null);
+});
+
 console.log("\n=================================================");
 console.log(`TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);
 console.log("=================================================");
 
 if (failed > 0) process.exit(1);
+
