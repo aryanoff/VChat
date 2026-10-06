@@ -6,12 +6,17 @@
     const PLACEHOLDER = /YOUR_PROJECT_REF|YOUR_SUPABASE_ANON_KEY|^$/;
 
     function getConfig() {
-        const cfg = global.VCHAT_CONFIG || {};
+        const cfg = global.VCHAT_CONFIG || global.__ENV__ || {};
+        const url = cfg.SUPABASE_URL || cfg.VITE_SUPABASE_URL || "";
+        const key = cfg.SUPABASE_PUBLISHABLE_KEY || cfg.VITE_SUPABASE_PUBLISHABLE_KEY || cfg.SUPABASE_ANON_KEY || cfg.VITE_SUPABASE_ANON_KEY || "";
+        const publicUrl = cfg.PUBLIC_URL || cfg.VITE_APP_URL || cfg.VITE_PRODUCTION_URL || "";
+        const devOtp = cfg.DEV_MOBILE_OTP != null ? cfg.DEV_MOBILE_OTP : (cfg.VCHAT_DEV_MOBILE_OTP != null ? cfg.VCHAT_DEV_MOBILE_OTP : true);
+
         return {
-            url: String(cfg.SUPABASE_URL || "").trim(),
-            key: String(cfg.SUPABASE_PUBLISHABLE_KEY || "").trim(),
-            publicUrl: String(cfg.PUBLIC_URL || "").trim(),
-            devMobileOtp: cfg.DEV_MOBILE_OTP !== false
+            url: String(url).trim(),
+            key: String(key).trim(),
+            publicUrl: String(publicUrl).trim(),
+            devMobileOtp: devOtp !== false
         };
     }
 
@@ -22,7 +27,10 @@
 
     function authRedirectTo() {
         const { publicUrl } = getConfig();
-        const origin = publicUrl || global.location.origin;
+        // Dynamically prioritize actual browser origin (works seamlessly on both localhost and Cloudflare Pages)
+        const origin = (global.location && global.location.origin && global.location.origin !== "null" && !global.location.origin.startsWith("file:"))
+            ? global.location.origin
+            : (publicUrl || "https://vchat-ckw.pages.dev");
         return new URL("Auth/login-signup.html", origin.endsWith("/") ? origin : origin + "/").toString();
     }
 

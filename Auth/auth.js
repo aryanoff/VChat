@@ -625,10 +625,35 @@ if (verifyBothOtp) {
     try {
         const client = api.getClient();
         supabaseClient = client;
+
         const params = new URLSearchParams(window.location.search);
         if (params.get("error_description")) {
             showToast(params.get("error_description"), "fa-solid fa-triangle-exclamation");
         }
+
+        // Listen for live auth events (including OAuth redirects and password recovery)
+        client.auth.onAuthStateChange(async (event, session) => {
+            if (event === "PASSWORD_RECOVERY") {
+                showToast("Password recovery session verified.", "fa-solid fa-key");
+                const newPass = window.prompt("Enter your new VChat password (at least 8 chars, 1 letter, 1 number):");
+                if (newPass) {
+                    if (V && V.isValidPassword && !V.isValidPassword(newPass)) {
+                        showToast("Password must have at least 8 characters, including a letter and a number.", "fa-solid fa-triangle-exclamation");
+                    } else {
+                        const { error } = await client.auth.updateUser({ password: newPass });
+                        if (error) {
+                            showToast(error.message, "fa-solid fa-triangle-exclamation");
+                        } else {
+                            showToast("Password updated successfully! Logging you in...", "fa-solid fa-circle-check");
+                            if (session) await afterAuthenticated(client, { mode: "login", email: session.user.email, name: session.user.user_metadata?.full_name || "" });
+                        }
+                    }
+                }
+            } else if (event === "SIGNED_IN" && session) {
+                await afterAuthenticated(client, { mode: "login", email: session.user.email, name: session.user.user_metadata?.full_name || "" });
+            }
+        });
+
         const { data: { session } } = await client.auth.getSession();
         if (session) await afterAuthenticated(client, { mode: "login", email: session.user.email, name: session.user.user_metadata?.full_name || "" });
     } catch (err) {

@@ -1,7 +1,10 @@
 # Environment and local secrets
 .env
 .env.local
-.env.*.local
+.env.production
+.env.development
+.env.*
+!.env.example
 js/runtime-config.js
 
 # Dependencies

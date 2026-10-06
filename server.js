@@ -82,19 +82,23 @@ function resolveSafePath(urlPath) {
 }
 
 function parseDotEnv() {
-    const envPath = path.join(ROOT, '.env');
+    const candidates = ['.env.local', '.env.development', '.env'];
     const result = {};
-    if (!fs.existsSync(envPath)) return result;
-    fs.readFileSync(envPath, 'utf8').split(/\r?\n/).forEach((line) => {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) return;
-        const eq = trimmed.indexOf('=');
-        if (eq < 1) return;
-        let value = trimmed.slice(eq + 1).trim();
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-            value = value.slice(1, -1);
-        }
-        result[trimmed.slice(0, eq).trim()] = value;
+    candidates.forEach((filename) => {
+        const envPath = path.join(ROOT, filename);
+        if (!fs.existsSync(envPath)) return;
+        fs.readFileSync(envPath, 'utf8').split(/\r?\n/).forEach((line) => {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) return;
+            const eq = trimmed.indexOf('=');
+            if (eq < 1) return;
+            let value = trimmed.slice(eq + 1).trim();
+            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                value = value.slice(1, -1);
+            }
+            const key = trimmed.slice(0, eq).trim();
+            if (result[key] == null) result[key] = value;
+        });
     });
     return result;
 }
@@ -116,15 +120,19 @@ const server = http.createServer((req, res) => {
 
     if (rawPath === '/js/config.js' || rawPath === '/js/runtime-config.js') {
         const env = { ...parseDotEnv(), ...process.env };
-        const url = env.SUPABASE_URL || env.VITE_SUPABASE_URL || '';
-        const key = env.SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || '';
+        const url = (env.SUPABASE_URL || env.VITE_SUPABASE_URL || '').trim();
+        const key = (env.SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '').trim();
+        const publicUrl = (env.VCHAT_PUBLIC_URL || env.VITE_APP_URL || env.VITE_PRODUCTION_URL || '').trim();
+        const rawOtp = env.VCHAT_DEV_MOBILE_OTP ?? env.DEV_MOBILE_OTP;
+        const devOtp = rawOtp == null ? true : String(rawOtp).toLowerCase() !== 'false';
+
         if (url && key && !/service_role/i.test(key)) {
             const body = 'window.VCHAT_CONFIG = ' + JSON.stringify({
                 SUPABASE_URL: url,
                 SUPABASE_PUBLISHABLE_KEY: key,
-                PUBLIC_URL: env.VCHAT_PUBLIC_URL || '',
-                DEV_MOBILE_OTP: String(env.VCHAT_DEV_MOBILE_OTP || 'true').toLowerCase() !== 'false'
-            }) + ';\n';
+                PUBLIC_URL: publicUrl,
+                DEV_MOBILE_OTP: devOtp
+            }, null, 4) + ';\n';
             res.writeHead(200, {
                 'Content-Type': 'application/javascript; charset=utf-8',
                 'Cache-Control': 'no-store'
