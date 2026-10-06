@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="VChat — private and simple messaging."
+    >
+    <meta name="theme-color" content="#00c853">
+
+    <title>VChat — Chats</title>
+
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/ams1rfsh/image/upload/c_auto,h_1024,w_1024/width_748_rjlv1y.png">
+
+
+    <!-- =========================================
+         GOOGLE FONT
+    ========================================== -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- =========================================
+         FONT AWESOME
+    ========================================== -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.css"
+    >
+
+
+    <!-- =========================================
+         CHAT CSS
+    ========================================== -->
+
+    <link
+        rel="stylesheet"
+        href="chat.css"
+    >
+    <script src="../theme.js"></script>
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         APP
+    ========================================== -->
+
+    <main class="chat-app">
+
+
+        <!-- =====================================
+             LEFT SIDEBAR
+        ====================================== -->
+
+        <aside
+            class="chat-sidebar"
+            id="chatSidebar"
+        >
+
+
+            <!-- =================================
+                 SIDEBAR HEADER
+            ================================== -->
+
+            <header class="sidebar-header">
+
+
+                <a
+                    href="../index.html"
+                    class="app-brand"
+                >
+
+                    <span class="app-logo">
+
+                        <img
+                            src="https://res.cloudinary.com/ams1rfsh/image/upload/v1791196140/width_748_rjlv1y.png"
+                            alt="VChat"
+                        >
+
+                    </span>
+
+
+                    <span class="app-brand-name">
+                        V<span>Chat</span>
+                    </span>
+
+                </a>
+
+
+                <div class="sidebar-header-actions">
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="newChatButton"
+                        aria-label="New chat"
+                        title="New chat"
+                    >
+
+                        <i class="fa-solid fa-pen-to-square"></i>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="themeToggleButton"
+                        aria-label="Toggle light/dark theme"
+                        title="Toggle light/dark theme"
+                    >
+
+                        <i class="fa-solid fa-circle-half-stroke"></i>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="sidebarMenuButton"
+                        aria-label="Menu"
+                        title="Menu"
+                    >
+
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+
+                    </button>
+
+                </div>
+
+            </header>
+
+
+
+            <!-- =================================
+                 SEARCH
+            ================================== -->
+
+            <div class="chat-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+
+                <input
+                    type="search"
+                    id="chatSearch"
+                    placeholder="Search chats"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+
+            <!-- =================================
+                 CHAT FILTERS
+            ================================== -->
+
+            <div class="chat-filters">
+
+                <button
+                    class="chat-filter active"
+                    type="button"
+                    data-filter="all"
+                >
+                    All
+                </button>
+
+
+                <button
+                    class="chat-filter"
+                    type="button"
+                    data-filter="unread"
+                >
+                    Unread
+                </button>
+
+
+                <button
+                    class="chat-filter"
+                    type="button"
+                    data-filter="groups"
+                >
+                    Groups
+                </button>
+
+            </div>
+
+
+
+            <!-- =================================
+                 CONVERSATION LIST
+            ================================== -->
+
+            <section
+                class="conversation-list"
+                id="conversationList"
+            >
+
+                <!-- Conversation rows are rendered from Supabase -->
+                <button type="button" hidden class="conversation-item" data-template="true"></button>
+
+                <placeholder-remove>
+
+                    <div class="user-avatar avatar-green">
+                        AR
+                        <span class="avatar-online"></span>
+                    </div>
+
+
+                    <div class="conversation-content">
+
+                        <div class="conversation-top">
+
+                            <strong>
+                                Aryan
+                            </strong>
+
+                            <span>
+                                10:32
+                            </span>
+
+                        </div>
+
+
+                        <div class="conversation-bottom">
+
+                            <p>
+                                Hey! How are you?
+                            </p>
+
+                            <span class="unread-count">
+                                2
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+
+                <!-- =============================
+                     CHAT ITEM 2
+                ============================== -->
+
+                <button
+                    type="button"
+                    class="conversation-item"
+                    data-name="Riya"
+                    data-type="personal"
+                >
+
+                    <div class="user-avatar avatar-blue">
+                        RS
+                    </div>
+
+
+                    <div class="conversation-content">
+
+                        <div class="conversation-top">
+
+                            <strong>
+                                Riya Sharma
+                            </strong>
+
+                            <span>
+                                09:48
+                            </span>
+
+                        </div>
+
+
+                        <div class="conversation-bottom">
+
+                            <p>
+                                Project looks great!
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+
+                <!-- =============================
+                     CHAT ITEM 3
+                ============================== -->
+
+                <button
+                    type="button"
+                    class="conversation-item"
+                    data-name="Dev Group"
+                    data-type="group"
+                >
+
+                    <div class="user-avatar avatar-purple">
+                        DG
+                    </div>
+
+
+                    <div class="conversation-content">
+
+                        <div class="conversation-top">
+
+                            <strong>
+                                Dev Group
+                            </strong>
+
+                            <span>
+                                08:15
+                            </span>
+
+                        </div>
+
+
+                        <div class="conversation-bottom">
+
+                            <p>
+                                Rahul: New update available
+                            </p>
+
+                            <span class="unread-count">
+                                5
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+
+                <!-- =============================
+                     CHAT ITEM 4
+                ============================== -->
+
+                <button
+                    type="button"
+                    class="conversation-item"
+                    data-name="Mom"
+                    data-type="personal"
+                >
+
+                    <div class="user-avatar avatar-orange">
+                        M
+                    </div>
+
+
+                    <div class="conversation-content">
+
+                        <div class="conversation-top">
+
+                            <strong>
+                                Mom
+                            </strong>
+
+                            <span>
+                                Yesterday
+                            </span>
+
+                        </div>
+
+
+                        <div class="conversation-bottom">
+
+                            <p>
+                                Call me when you're free ❤️
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+
+                <!-- =============================
+                     CHAT ITEM 5
+                ============================== -->
+
+                <button
+                    type="button"
+                    class="conversation-item"
+                    data-name="Friends Group"
+                    data-type="group"
+                >
+
+                    <div class="user-avatar avatar-pink">
+                        FG
+                    </div>
+
+
+                    <div class="conversation-content">
+
+                        <div class="conversation-top">
+
+                            <strong>
+                                Friends Group
+                            </strong>
+
+                            <span>
+                                Yesterday
+                            </span>
+
+                        </div>
+
+
+                        <div class="conversation-bottom">
+
+                            <p>
+                                You: See you soon!
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+
+                <!-- =============================
+                     CHAT ITEM 6
+                ============================== -->
+
+                <button
+                    type="button"
+                    class="conversation-item"
+                    data-name="Rahul"
+                    data-type="personal"
+                >
+
+                    <div class="user-avatar avatar-cyan">
+                        RK
+                    </div>
+
+
+                    <div class="conversation-content">
+
+                        <div class="conversation-top">
+
+                            <strong>
+                                Rahul
+                            </strong>
+
+                            <span>
+                                Monday
+                            </span>
+
+                        </div>
+
+
+                        <div class="conversation-bottom">
+
+                            <p>
+                                Let's meet tomorrow.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+                <!-- NO RESULTS -->
+
+                <div
+                    class="no-search-result"
+                    id="noSearchResult"
+                    hidden
+                >
+
+                    <i class="fa-regular fa-face-frown"></i>
+
+                    <strong>
+                        No chats found
+                    </strong>
+
+                    <span>
+                        Try a different search.
+                    </span>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================
+                 SIDEBAR FOOTER
+            ================================== -->
+
+            <footer class="sidebar-footer">
+
+
+                <button
+                    type="button"
+                    class="sidebar-profile"
+                    id="profileButton"
+                >
+
+                    <div class="user-avatar avatar-current">
+                        <span id="currentUserInitials">
+                            VC
+                        </span>
+
+                        <span class="avatar-online"></span>
+                    </div>
+
+
+                    <div class="sidebar-profile-info">
+
+                        <strong id="currentUserName">
+                            VChat User
+                        </strong>
+
+                        <span>
+                            Online
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="icon-button logout-button"
+                    id="logoutButton"
+                    title="Logout"
+                    aria-label="Logout"
+                >
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                </button>
+
+            </footer>
+
+        </aside>
+
+
+
+        <!-- =====================================
+             MAIN CHAT
+        ====================================== -->
+
+        <section class="chat-main">
+
+
+            <!-- =================================
+                 CHAT HEADER
+            ================================== -->
+
+            <header class="chat-header">
+
+
+                <button
+                    type="button"
+                    class="mobile-back-button"
+                    id="mobileBackButton"
+                    aria-label="Back to chats"
+                >
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="active-user"
+                    id="activeUserButton"
+                >
+
+                    <div class="user-avatar avatar-green">
+                        AR
+                        <span class="avatar-online"></span>
+                    </div>
+
+
+                    <div class="active-user-info">
+
+                        <strong id="activeChatName">
+                            Aryan
+                        </strong>
+
+                        <span id="activeChatStatus">
+                            <i></i>
+                            Online
+                        </span>
+
+                    </div>
+
+                </button>
+
+
+
+                <!-- HEADER ACTIONS -->
+
+                <div class="chat-header-actions">
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="videoCallButton"
+                        title="Video call"
+                        aria-label="Video call"
+                    >
+
+                        <i class="fa-solid fa-video"></i>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="audioCallButton"
+                        title="Voice call"
+                        aria-label="Voice call"
+                    >
+
+                        <i class="fa-solid fa-phone"></i>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="chatSearchButton"
+                        title="Search conversation"
+                        aria-label="Search conversation"
+                    >
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="detailsButton"
+                        title="Conversation details"
+                        aria-label="Conversation details"
+                    >
+
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+
+                    </button>
+
+                </div>
+
+            </header>
+
+
+
+            <!-- =================================
+                 MESSAGE AREA
+            ================================== -->
+
+            <section
+                class="chat-messages"
+                id="chatMessages"
+            >
+
+
+                <!-- Background pattern -->
+
+                <div
+                    class="chat-pattern"
+                    aria-hidden="true"
+                ></div>
+
+
+
+                <!-- Date -->
+
+                <div class="chat-date">
+                    Today
+                </div>
+
+
+
+                <!-- System notice -->
+
+                <div class="secure-notice">
+
+                    <i class="fa-solid fa-lock"></i>
+
+                    Messages are private and secure.
+
+                </div>
+
+
+
+                <!-- INCOMING -->
+
+                <div class="message received">
+
+                    <div class="message-bubble">
+
+                        <p>
+                            Hey! How are you?
+                        </p>
+
+
+                        <div class="message-meta">
+
+                            <time>
+                                10:28 AM
+                            </time>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- OUTGOING -->
+
+                <div class="message sent">
+
+                    <div class="message-bubble">
+
+                        <p>
+                            I'm good! Working on the VChat
+                            dashboard right now.
+                        </p>
+
+
+                        <div class="message-meta">
+
+                            <time>
+                                10:29 AM
+                            </time>
+
+                            <span class="message-read">
+                                ✓✓
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- INCOMING -->
+
+                <div class="message received">
+
+                    <div class="message-bubble">
+
+                        <p>
+                            That's awesome! How is the new
+                            design coming along?
+                        </p>
+
+
+                        <div class="message-meta">
+
+                            <time>
+                                10:30 AM
+                            </time>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- OUTGOING -->
+
+                <div class="message sent">
+
+                    <div class="message-bubble">
+
+                        <p>
+                            Almost finished. I kept the interface
+                            simple and clean.
+                        </p>
+
+
+                        <div class="message-meta">
+
+                            <time>
+                                10:31 AM
+                            </time>
+
+                            <span class="message-read">
+                                ✓✓
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- INCOMING -->
+
+                <div class="message received">
+
+                    <div class="message-bubble">
+
+                        <p>
+                            Nice! That sounds perfect 🔥
+                        </p>
+
+
+                        <div class="message-meta">
+
+                            <time>
+                                10:32 AM
+                            </time>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TYPING -->
+
+                <div
+                    class="typing-wrapper"
+                    id="typingIndicator"
+                    hidden
+                >
+
+                    <div class="typing-bubble">
+
+                        <span></span>
+                        <span></span>
+                        <span></span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =================================
+                 MESSAGE COMPOSER
+            ================================== -->
+
+            <footer class="message-composer">
+
+
+                <button
+                    type="button"
+                    class="composer-button"
+                    id="emojiButton"
+                    title="Emoji"
+                    aria-label="Emoji"
+                >
+
+                    <i class="fa-regular fa-face-smile"></i>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="composer-button"
+                    id="attachmentButton"
+                    title="Attach"
+                    aria-label="Attach"
+                >
+
+                    <i class="fa-solid fa-paperclip"></i>
+
+                </button>
+
+
+                <input
+                    type="file"
+                    id="fileInput"
+                    hidden
+                    multiple
+                >
+
+
+                <textarea
+                    id="messageInput"
+                    placeholder="Type a message..."
+                    autocomplete="off"
+                    rows="1"
+                    maxlength="4000"
+                ></textarea>
+
+
+                <button
+                    type="button"
+                    class="voice-button"
+                    id="voiceButton"
+                    title="Voice message"
+                    aria-label="Voice message"
+                >
+
+                    <i class="fa-solid fa-microphone"></i>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="send-button"
+                    id="sendButton"
+                    title="Send message"
+                    aria-label="Send message"
+                >
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </button>
+
+            </footer>
+
+        </section>
+
+
+
+        <!-- =====================================
+             RIGHT DETAILS PANEL
+        ====================================== -->
+
+        <aside
+            class="details-panel"
+            id="detailsPanel"
+        >
+
+
+            <!-- HEADER -->
+
+            <header class="details-header">
+
+                <strong>
+                    Contact details
+                </strong>
+
+
+                <button
+                    type="button"
+                    class="icon-button"
+                    id="closeDetailsButton"
+                    aria-label="Close details"
+                >
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </header>
+
+
+
+            <!-- PROFILE -->
+
+            <section class="details-profile">
+
+                <div class="large-avatar avatar-green">
+                    AR
+                    <span class="large-online"></span>
+                </div>
+
+
+                <h2>
+                    Aryan
+                </h2>
+
+
+                <p>
+                    Online
+                </p>
+
+
+                <div class="details-actions">
+
+                    <button>
+                        <i class="fa-solid fa-phone"></i>
+                        Call
+                    </button>
+
+                    <button>
+                        <i class="fa-solid fa-video"></i>
+                        Video
+                    </button>
+
+                    <button>
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Search
+                    </button>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ABOUT -->
+
+            <section class="details-section">
+
+                <span>
+                    ABOUT
+                </span>
+
+                <p>
+                    Available for chat
+                </p>
+
+            </section>
+
+
+
+            <!-- MEDIA -->
+
+            <section class="details-section">
+
+                <div class="details-title-row">
+
+                    <span>
+                        SHARED MEDIA
+                    </span>
+
+                    <button>
+                        View all
+                    </button>
+
+                </div>
+
+
+                <div class="media-grid">
+
+                    <div class="media-placeholder">
+                        <i class="fa-regular fa-image"></i>
+                    </div>
+
+                    <div class="media-placeholder">
+                        <i class="fa-regular fa-image"></i>
+                    </div>
+
+                    <div class="media-placeholder">
+                        <i class="fa-regular fa-file"></i>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- OPTIONS -->
+
+            <section class="details-options">
+
+                <button>
+
+                    <i class="fa-regular fa-star"></i>
+
+                    Starred messages
+
+                    <i class="fa-solid fa-chevron-right"></i>
+
+                </button>
+
+
+                <button>
+
+                    <i class="fa-solid fa-bell"></i>
+
+                    Notifications
+
+                    <i class="fa-solid fa-chevron-right"></i>
+
+                </button>
+
+
+                <button class="danger-option">
+
+                    <i class="fa-solid fa-ban"></i>
+
+                    Block contact
+
+                    <i class="fa-solid fa-chevron-right"></i>
+
+                </button>
+
+            </section>
+
+        </aside>
+
+    </main>
+
+
+
+    <!-- =========================================
+         NEW CHAT MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="newChatModal" hidden role="dialog" aria-modal="true" aria-labelledby="newChatTitle">
+        <div class="modal-card">
+
+            <div class="modal-header">
+                <div>
+                    <span>NEW CONVERSATION</span>
+                    <h2 id="newChatTitle">Start a new chat</h2>
+                </div>
+
+                <button type="button" class="modal-close" id="closeNewChat" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="modal-help">
+                Find a VChat user using their registered 10-digit mobile number.
+            </p>
+
+            <div class="modal-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                    type="tel"
+                    id="newChatNumber"
+                    placeholder="Enter 10-digit mobile number"
+                    maxlength="15"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div id="newChatValidation" class="modal-inline-error" hidden></div>
+
+            <button type="button" class="modal-action" id="findUserBtn">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Find VChat user</span>
+            </button>
+
+            <!-- Search Result -->
+            <div id="newChatResult" class="new-chat-result" hidden></div>
+
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         CHAT JS
+    ========================================== -->
+
+    <script src="chat.js"></script>
+
+</body>
+
+</html>

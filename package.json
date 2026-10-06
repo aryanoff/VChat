@@ -1,0 +1,14 @@
+{
+  "name": "vchat",
+  "private": true,
+  "version": "1.0.0",
+  "description": "VChat — private messaging web app (static frontend + Supabase)",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "write-config": "node scripts/write-config.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

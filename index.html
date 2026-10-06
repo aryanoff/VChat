@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VChat is a fast, simple and private messaging platform with voice calls, video calls, communities and secure file sharing.">
+    <meta name="theme-color" content="#00c853">
+
+    <title>VChat — Simple, Private Messaging & Calls</title>
+
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/ams1rfsh/image/upload/c_auto,h_1024,w_1024/width_748_rjlv1y.png">
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.css"
+    >
+
+    <link rel="stylesheet" href="style.css">
+    <script src="theme.js"></script>
+</head>
+
+<body>
+
+    <!-- =========================================
+         MAIN VCHAT CONTAINER
+    ========================================== -->
+    <main class="vchat-wrapper">
+
+        <!-- =========================================
+             NAVBAR
+        ========================================== -->
+        <header class="navbar">
+
+            <!-- Logo -->
+            <a href="index.html" class="brand">
+
+                <div class="brand-icon">
+                    <img src="https://res.cloudinary.com/ams1rfsh/image/upload/v1791196140/width_748_rjlv1y.png" alt="VChat Logo">
+                </div>
+
+                <span class="brand-text">
+                    V<span>Chat</span>
+                </span>
+
+            </a>
+
+
+            <!-- Navigation -->
+            <nav class="nav-links" id="navLinks">
+                <a href="info/info.html#features">Features</a>
+                <a href="About/about.html#privacy">Privacy</a>
+                <a href="About/about.html#security">Security</a>
+                <a href="About/about.html#about">About</a>
+                <a href="About/about.html#help">Help</a>
+            </nav>
+
+
+            <div class="nav-actions">
+                <!-- Theme Toggle Button -->
+                <button type="button" class="theme-toggle-btn" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+
+                <!-- Navbar Button -->
+                <a href="Auth/login-signup.html" class="nav-btn">
+                    Launch VChat
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+                <!-- Mobile Menu Toggle Button -->
+                <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+        </header>
+
+
+        <!-- =========================================
+             HERO SECTION
+        ========================================== -->
+        <section class="hero">
+
+            <!-- =====================================
+                 LEFT HERO CONTENT
+            ====================================== -->
+            <div class="hero-content">
+
+                <div class="hero-badge">
+                    <span class="status-dot"></span>
+                    Private messaging • Built for everyone
+                </div>
+
+
+                <h1>
+                    Chat
+                    <span>Privately.</span>
+                    <br>
+                    Connect
+                    <span>Simply.</span>
+                </h1>
+
+
+                <p class="hero-description">
+                    Fast, simple and secure messaging for friends,
+                    family and teams. Stay connected with VChat
+                    wherever you go.
+                </p>
+
+
+                <!-- CTA Buttons -->
+                <div class="hero-buttons">
+
+                    <a href="Auth/login-signup.html" class="primary-btn">
+                        Get VChat Free
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                    <a href="info/info.html" class="secondary-btn">
+                        <i class="fa-solid fa-play"></i>
+                        Explore VChat
+                    </a>
+
+                </div>
+
+
+                <!-- Small information -->
+                <div class="hero-info">
+
+                    <div class="info-item">
+                        <i class="fa-solid fa-lock"></i>
+                        End-to-end secure
+                    </div>
+
+                    <div class="info-item">
+                        <i class="fa-solid fa-bolt"></i>
+                        Lightning fast
+                    </div>
+
+                    <div class="info-item">
+                        <i class="fa-solid fa-mobile-screen"></i>
+                        Web & Mobile
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 RIGHT PRODUCT PREVIEW
+            ====================================== -->
+            <div class="hero-visual">
+
+
+                <!-- Glow -->
+                <div class="green-glow"></div>
+
+
+                <!-- =================================
+                     DESKTOP CHAT WINDOW
+                ================================== -->
+                <div class="desktop-chat">
+
+
+                    <!-- Sidebar -->
+                    <aside class="chat-sidebar">
+
+                        <!-- Sidebar Header -->
+                        <div class="sidebar-top">
+
+                            <div class="mini-brand">
+                                <img src="https://res.cloudinary.com/ams1rfsh/image/upload/v1791196140/width_748_rjlv1y.png" alt="VChat Logo">
+
+                                <span class="brand-text">
+                                    V<span>Chat</span>
+                                </span>
+                            </div>
+
+                            <button class="icon-btn">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+
+                        </div>
+
+
+                        <!-- Search -->
+                        <div class="search-box">
+
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                            <input
+                                type="text"
+                                placeholder="Search chats"
+                            >
+
+                        </div>
+
+
+                        <!-- Chat list -->
+                        <div class="chat-list">
+
+
+                            <!-- Chat Item -->
+                            <div class="chat-item active">
+
+                                <div class="avatar green-avatar">
+                                    AR
+                                </div>
+
+                                <div class="chat-details">
+
+                                    <div class="chat-name">
+                                        Aryan
+                                        <span>10:32</span>
+                                    </div>
+
+                                    <div class="chat-last">
+                                        Hey! How are you?
+                                    </div>
+
+                                </div>
+
+                                <span class="online-dot"></span>
+
+                            </div>
+
+
+                            <div class="chat-item">
+
+                                <div class="avatar blue-avatar">
+                                    RS
+                                </div>
+
+                                <div class="chat-details">
+
+                                    <div class="chat-name">
+                                        Riya
+                                        <span>09:48</span>
+                                    </div>
+
+                                    <div class="chat-last">
+                                        Project looks great!
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="chat-item">
+
+                                <div class="avatar purple-avatar">
+                                    DG
+                                </div>
+
+                                <div class="chat-details">
+
+                                    <div class="chat-name">
+                                        Dev Group
+                                        <span>08:15</span>
+                                    </div>
+
+                                    <div class="chat-last">
+                                        New update available
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="chat-item">
+
+                                <div class="avatar orange-avatar">
+                                    M
+                                </div>
+
+                                <div class="chat-details">
+
+                                    <div class="chat-name">
+                                        Mom
+                                        <span>Yesterday</span>
+                                    </div>
+
+                                    <div class="chat-last">
+                                        Call me when free ❤️
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="chat-item">
+
+                                <div class="avatar pink-avatar">
+                                    FG
+                                </div>
+
+                                <div class="chat-details">
+
+                                    <div class="chat-name">
+                                        Friends Group
+                                        <span>Yesterday</span>
+                                    </div>
+
+                                    <div class="chat-last">
+                                        You: See you soon!
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </aside>
+
+
+
+                    <!-- =================================
+                         MAIN CONVERSATION
+                    ================================== -->
+                    <section class="conversation">
+
+
+                        <!-- Conversation Header -->
+                        <div class="conversation-header">
+
+                            <div class="user-profile">
+
+                                <div class="avatar green-avatar">
+                                    AR
+                                </div>
+
+                                <div>
+
+                                    <strong>Aryan</strong>
+
+                                    <small>
+                                        <span class="tiny-online"></span>
+                                        Online
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="conversation-actions">
+
+                                <button>
+                                    <i class="fa-solid fa-phone"></i>
+                                </button>
+
+                                <button>
+                                    <i class="fa-solid fa-video"></i>
+                                </button>
+
+                                <button>
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- Chat Messages -->
+                        <div class="messages">
+
+
+                            <!-- Date -->
+                            <div class="date-label">
+                                Today
+                            </div>
+
+
+                            <!-- Incoming -->
+                            <div class="message incoming">
+
+                                <div class="message-bubble">
+
+                                    Hey! How's the new project going?
+
+                                    <small>
+                                        10:28 AM
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Outgoing -->
+                            <div class="message outgoing">
+
+                                <div class="message-bubble">
+
+                                    Going great! Just finished the
+                                    homepage design.
+
+                                    <small>
+                                        10:29 AM ✓✓
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Incoming -->
+                            <div class="message incoming">
+
+                                <div class="message-bubble">
+
+                                    Nice! The VChat concept is looking
+                                    really clean 🔥
+
+                                    <small>
+                                        10:30 AM
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Outgoing -->
+                            <div class="message outgoing">
+
+                                <div class="message-bubble">
+
+                                    Thanks! Let's launch it soon 🚀
+
+                                    <small>
+                                        10:31 AM ✓✓
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Typing -->
+                            <div class="typing-indicator">
+
+                                <span></span>
+                                <span></span>
+                                <span></span>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- Message Input -->
+                        <div class="message-input-area">
+
+                            <button class="input-icon">
+                                <i class="fa-regular fa-face-smile"></i>
+                            </button>
+
+                            <input
+                                type="text"
+                                placeholder="Type a message..."
+                            >
+
+                            <button class="input-icon">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </button>
+
+                            <button class="send-btn">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+
+                <!-- =================================
+                     MOBILE PHONE PREVIEW
+                ================================== -->
+                <div class="phone">
+
+                    <!-- Phone Notch -->
+                    <div class="phone-notch"></div>
+
+
+                    <!-- Phone Screen -->
+                    <div class="phone-screen">
+
+
+                        <!-- Mobile Header -->
+                        <div class="mobile-header">
+
+                            <div class="mobile-user">
+
+                                <div class="avatar green-avatar">
+                                    AR
+                                </div>
+
+                                <div>
+                                    <strong>Aryan</strong>
+
+                                    <small>
+                                        Online
+                                    </small>
+                                </div>
+
+                            </div>
+
+                            <i class="fa-solid fa-video"></i>
+
+                        </div>
+
+
+                        <!-- Mobile Messages -->
+                        <div class="mobile-messages">
+
+                            <div class="mobile-date">
+                                Today
+                            </div>
+
+
+                            <div class="mobile-message received">
+                                Hey! 👋
+                            </div>
+
+
+                            <div class="mobile-message sent">
+                                Hey! Good morning 😊
+                            </div>
+
+
+                            <div class="mobile-message received">
+                                Ready for the launch?
+                            </div>
+
+
+                            <div class="mobile-message sent">
+                                Absolutely! 🚀
+                            </div>
+
+                        </div>
+
+
+                        <!-- Mobile Input -->
+                        <div class="mobile-input">
+
+                            <i class="fa-regular fa-face-smile"></i>
+
+                            <span>
+                                Message
+                            </span>
+
+                            <div class="mobile-send">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </div>
+
+                        </div>
+
+
+                        <!-- Bottom Nav -->
+                        <div class="mobile-nav">
+
+                            <div class="mobile-nav-item active">
+                                <i class="fa-regular fa-comment"></i>
+                                <span>Chats</span>
+                            </div>
+
+                            <div class="mobile-nav-item">
+                                <i class="fa-solid fa-phone"></i>
+                                <span>Calls</span>
+                            </div>
+
+                            <div class="mobile-nav-item">
+                                <i class="fa-regular fa-user"></i>
+                                <span>Profile</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             FEATURE STRIP
+        ========================================== -->
+        <section class="feature-strip">
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+
+                <div>
+                    <h3>Private by design</h3>
+
+                    <p>
+                        Your conversations stay protected.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+
+                <div>
+                    <h3>Instant messaging</h3>
+
+                    <p>
+                        Fast, reliable real-time conversations.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    <i class="fa-solid fa-video"></i>
+                </div>
+
+                <div>
+                    <h3>Calls & video</h3>
+
+                    <p>
+                        Connect with voice and video calls.
+                    </p>
+                </div>
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================
+     VCHAT FOOTER
+========================================= -->
+
+<footer class="site-footer">
+
+    <div class="footer-container">
+
+        <!-- =====================================
+             TOP FOOTER
+        ====================================== -->
+        <div class="footer-main">
+
+
+            <!-- =================================
+                 BRAND / ABOUT
+            ================================== -->
+            <div class="footer-column footer-brand-column">
+
+                <a href="index.html" class="vchat-footer-brand">
+
+                    <span class="vchat-footer-logo">
+                        <img
+                            src="https://res.cloudinary.com/ams1rfsh/image/upload/v1791196140/width_748_rjlv1y.png"
+                            alt="VChat"
+                        >
+                    </span>
+
+                    <span class="vchat-footer-name">
+                        <strong>V</strong>Chat
+                    </span>
+
+                </a>
+
+
+                <p class="footer-tagline">
+                    Simple. Private. Connected.
+                </p>
+
+
+                <p class="footer-description">
+                    VChat makes it simple to stay connected with the
+                    people who matter. Fast messaging, calls and
+                    conversations — all in one place.
+                </p>
+
+
+                <!-- Download / CTA -->
+                <a href="#" class="footer-download-btn">
+
+                    <span>
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </span>
+
+                    Get VChat Free
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </a>
+
+            </div>
+
+
+
+            <!-- =================================
+                 PRODUCT LINKS
+            ================================== -->
+            <div class="footer-column">
+
+                <h3>Product</h3>
+
+                <ul class="footer-links">
+
+                    <li>
+                        <a href="info/info.html#features">
+                            Features
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="info/info.html#chat">
+                            Chat
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="info/info.html#calls">
+                            Calls
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="info/info.html#communities">
+                            Communities
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="info/info.html#files">
+                            File Sharing
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="Auth/login-signup.html">
+                            VChat Web
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+
+
+            <!-- =================================
+                 COMPANY LINKS
+            ================================== -->
+            <div class="footer-column">
+
+                <h3>Company</h3>
+
+                <ul class="footer-links">
+
+                    <li>
+                        <a href="About/about.html#about">
+                            About VChat
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="About/about.html#security">
+                            Security
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="About/about.html#privacy">
+                            Privacy
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="About/about.html#terms">
+                            Terms
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="About/about.html#help">
+                            Help Center
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="About/about.html#contact">
+                            Contact
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+
+
+            <!-- =================================
+                 SOCIAL / CONNECT
+            ================================== -->
+            <div class="footer-column footer-social-column">
+
+                <h3>Connect</h3>
+
+
+                <p class="footer-social-text">
+                    Follow VChat Developer for updates, new features
+                    and product announcements.
+                </p>
+
+
+                <div class="vchat-social-links">
+
+                    <!-- X -->
+                    <a
+                        href="#"
+                        class="vchat-social-link"
+                        aria-label="VChat on X"
+                        data-tooltip="X"
+                    >
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </a>
+
+
+                    <!-- Instagram -->
+                    <a
+                        href="#"
+                        class="vchat-social-link"
+                        aria-label="VChat on Instagram"
+                        data-tooltip="Instagram"
+                    >
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+
+
+                    <!-- LinkedIn -->
+                    <a
+                        href="#"
+                        class="vchat-social-link"
+                        aria-label="VChat on LinkedIn"
+                        data-tooltip="LinkedIn"
+                    >
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </a>
+
+
+                    <!-- YouTube -->
+                    <a
+                        href="#"
+                        class="vchat-social-link"
+                        aria-label="VChat on YouTube"
+                        data-tooltip="YouTube"
+                    >
+                        <i class="fa-brands fa-youtube"></i>
+                    </a>
+
+
+                    <!-- GitHub -->
+                    <a
+                        href="#"
+                        class="vchat-social-link"
+                        aria-label="VChat on GitHub"
+                        data-tooltip="GitHub"
+                    >
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+
+                </div>
+
+
+                <!-- Status -->
+                <div class="footer-status">
+
+                    <span class="footer-status-dot"></span>
+
+                    <span>
+                        VChat services are online
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =====================================
+             FOOTER NEWSLETTER / CTA
+        ====================================== -->
+        <div class="footer-cta">
+
+            <div class="footer-cta-content">
+
+                <span class="footer-cta-label">
+                    VCHAT
+                </span>
+
+                <h2>
+                    Stay connected.
+                    <span>Stay private.</span>
+                </h2>
+
+                <p>
+                    Discover a better way to communicate.
+                </p>
+
+            </div>
+
+
+            <a href="Auth/login-signup.html" class="footer-cta-button">
+
+                Launch VChat
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </a>
+
+        </div>
+
+
+
+        <!-- =====================================
+             FOOTER BOTTOM
+        ====================================== -->
+        <div class="footer-bottom">
+
+            <div class="footer-copyright">
+
+                <span>
+                    © 2026 VChat.
+                </span>
+
+                <span>
+                    All rights reserved.
+                </span>
+
+            </div>
+
+
+            <div class="footer-legal">
+
+                <a href="About/about.html#privacy">
+                    Privacy
+                </a>
+
+                <a href="About/about.html#terms">
+                    Terms
+                </a>
+
+                <a href="About/about.html#privacy">
+                    Cookies
+                </a>
+
+            </div>
+
+
+            <div class="footer-made">
+
+                Built for better conversations
+                <span>•</span>
+                Made with
+                <i class="fa-solid fa-heart"></i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</footer>
+
+<script>
+    const navToggle = document.getElementById("navToggle");
+    const navLinks = document.getElementById("navLinks");
+    if (navToggle && navLinks) {
+        navToggle.addEventListener("click", () => {
+            navLinks.classList.toggle("nav-open");
+            const isOpen = navLinks.classList.contains("nav-open");
+            navToggle.setAttribute("aria-expanded", isOpen);
+            const icon = navToggle.querySelector("i");
+            if (icon) {
+                icon.className = isOpen ? "fa-solid fa-xmark" : "fa-solid fa-bars";
+            }
+        });
+
+        navLinks.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", () => {
+                navLinks.classList.remove("nav-open");
+                const icon = navToggle.querySelector("i");
+                if (icon) icon.className = "fa-solid fa-bars";
+            });
+        });
+    }
+</script>
+
+</body>
+</html>

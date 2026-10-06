@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="Sign in or create your VChat account.">
+    <meta name="theme-color" content="#00c853">
+
+    <title>VChat — Login / Sign Up</title>
+
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/ams1rfsh/image/upload/c_auto,h_1024,w_1024/width_748_rjlv1y.png">
+
+
+    <!-- =========================================
+         GOOGLE FONTS
+    ========================================== -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap"
+        rel="stylesheet">
+
+
+    <!-- =========================================
+         FONT AWESOME
+    ========================================== -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.css">
+
+
+    <!-- =========================================
+         AUTH CSS
+    ========================================== -->
+
+    <link rel="stylesheet" href="authstyle.css">
+    <script src="../theme.js"></script>
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         BACKGROUND
+    ========================================== -->
+
+    <div class="auth-page-bg">
+
+        <div class="auth-pattern"></div>
+
+        <div class="auth-glow auth-glow-one"></div>
+
+        <div class="auth-glow auth-glow-two"></div>
+
+        <div class="auth-grain"></div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <header>
+
+        <div class="auth-header">
+            <a href="../index.html" class="auth-brand" aria-label="VChat Home">
+
+                <span class="auth-brand-icon">
+
+                    <img src="https://res.cloudinary.com/ams1rfsh/image/upload/v1791196140/width_748_rjlv1y.png"
+                        alt="VChat Logo">
+
+                </span>
+
+
+                <span class="auth-brand-text">
+                    V<span>Chat</span>
+                </span>
+
+            </a>
+
+
+            <div class="auth-header-actions">
+                <button type="button" class="theme-toggle-btn" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+
+                <a href="../index.html" class="back-home">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    <span>
+                        Back to VChat
+                    </span>
+
+                </a>
+            </div>
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================================
+         MAIN AUTH AREA
+    ========================================== -->
+
+    <main class="auth-container">
+
+
+        <!-- =====================================
+             LEFT SHOWCASE
+        ====================================== -->
+
+        <section class="auth-showcase">
+
+
+            <div class="showcase-content">
+
+
+                <div class="showcase-badge">
+
+                    <span class="online-dot"></span>
+
+                    PRIVATE • SIMPLE • CONNECTED
+
+                </div>
+
+
+
+                <h1>
+
+                    Stay
+                    <span>connected.</span>
+
+                    <br>
+
+                    Stay
+                    <em>closer.</em>
+
+                </h1>
+
+
+
+                <p class="showcase-description">
+
+                    Your conversations, your people, your space.
+                    Sign in to continue chatting or create your
+                    VChat account and start connecting.
+
+                </p>
+
+
+
+                <!-- =================================
+                     QUOTE CARD
+                ================================== -->
+
+                <div class="showcase-card">
+
+
+                    <div class="showcase-card-icon">
+
+                        <i class="fa-regular fa-comment"></i>
+
+                    </div>
+
+
+                    <div class="showcase-card-content">
+
+                        <strong>
+                            Simple. Private. Connected.
+                        </strong>
+
+                        <p>
+                            Everything you need to stay connected
+                            in one place.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =================================
+                     FEATURES
+                ================================== -->
+
+                <div class="auth-features">
+
+
+                    <div class="auth-feature">
+
+                        <span class="feature-icon">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+
+                        <span>
+                            Secure
+                        </span>
+
+                    </div>
+
+
+                    <div class="auth-feature">
+
+                        <span class="feature-icon">
+                            <i class="fa-solid fa-bolt"></i>
+                        </span>
+
+                        <span>
+                            Fast
+                        </span>
+
+                    </div>
+
+
+                    <div class="auth-feature">
+
+                        <span class="feature-icon">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                        </span>
+
+                        <span>
+                            Mobile ready
+                        </span>
+
+                    </div>
+
+
+                    <div class="auth-feature">
+
+                        <span class="feature-icon">
+                            <i class="fa-solid fa-video"></i>
+                        </span>
+
+                        <span>
+                            Calls
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Large decorative VChat symbol -->
+
+            <div class="background-chat-symbol">
+
+                <i class="fa-regular fa-comment"></i>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             AUTH CARD
+        ====================================== -->
+
+        <section class="auth-card">
+
+
+            <!-- =================================
+                 CARD HEADER
+            ================================== -->
+
+            <div class="auth-card-header">
+
+                <span class="auth-eyebrow">
+                    WELCOME TO VCHAT
+                </span>
+
+
+                <h2 id="authTitle">
+                    Welcome back
+                </h2>
+
+
+                <p id="authSubtitle">
+                    Sign in to continue your conversations.
+                </p>
+
+            </div>
+
+
+
+            <!-- =================================
+                 LOGIN / SIGNUP TABS
+            ================================== -->
+
+            <div class="auth-tabs">
+
+                <button type="button" class="auth-tab active" id="loginTab">
+                    Login
+                </button>
+
+
+                <button type="button" class="auth-tab" id="signupTab">
+                    Create account
+                </button>
+
+
+                <span class="auth-tab-indicator"></span>
+
+            </div>
+
+
+
+            <!-- =================================
+                 LOGIN FORM
+            ================================== -->
+
+            <form id="loginForm" class="auth-form active-form" novalidate>
+
+
+                <!-- MOBILE NUMBER -->
+
+                <div class="form-group">
+
+                    <label for="loginMobile">
+                        Mobile number
+                    </label>
+
+
+                    <div class="phone-input">
+
+                        <div class="country-code">
+
+                            <span>+91</span>
+
+                            <i class="fa-solid fa-chevron-down"></i>
+
+                        </div>
+
+
+                        <input type="tel" id="loginMobile" name="loginMobile" inputmode="numeric" maxlength="10"
+                            autocomplete="tel" placeholder="Enter mobile number" required>
+
+                    </div>
+
+                </div>
+
+                <!-- EMAIL -->
+
+                <div class="form-group">
+
+                    <label for="loginEmail">
+                        Email address
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-regular fa-envelope"></i>
+
+                        <input type="email" id="loginEmail" placeholder="Enter your email address" autocomplete="email"
+                            required>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- PASSWORD -->
+
+                <div class="form-group">
+
+                    <div class="field-top">
+
+                        <label for="loginPassword">
+                            Password
+                        </label>
+
+
+                        <a href="#" id="forgotPasswordLink">
+                            Forgot password?
+                        </a>
+
+                    </div>
+
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock"></i>
+
+
+                        <input type="password" id="loginPassword" placeholder="Enter your password"
+                            autocomplete="current-password" required>
+
+
+                        <button type="button" class="password-toggle" aria-label="Show password">
+
+                            <i class="fa-regular fa-eye"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- REMEMBER ME -->
+
+                <label class="check-row">
+
+                    <input type="checkbox" checked>
+
+                    <span class="custom-checkbox"></span>
+
+                    <span>
+                        Remember me
+                    </span>
+
+                </label>
+
+
+
+                <!-- LOGIN -->
+
+                <button type="submit" class="auth-submit">
+
+                    <span>
+                        Sign in to VChat
+                    </span>
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+
+
+                <!-- DIVIDER -->
+
+                <div class="auth-divider">
+
+                    <span></span>
+
+                    <p>
+                        or continue with
+                    </p>
+
+                    <span></span>
+
+                </div>
+
+
+
+                <!-- GOOGLE / APPLE -->
+
+                <div class="social-buttons">
+
+                    <button type="button" class="social-button">
+
+                        <i class="fa-brands fa-google"></i>
+
+                        Google
+
+                    </button>
+
+
+                    <button type="button" class="social-button">
+
+                        <i class="fa-brands fa-apple"></i>
+
+                        Apple
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- OTP -->
+
+                <button type="button" class="otp-button" id="loginOtpButton">
+
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+
+                    Continue with mobile OTP
+
+                </button>
+
+            </form>
+
+
+
+            <!-- =================================
+                 SIGNUP FORM
+            ================================== -->
+
+            <form id="signupForm" class="auth-form" novalidate>
+
+
+                <!-- NAME -->
+
+                <div class="form-group">
+
+                    <label for="signupName">
+                        Full name
+                    </label>
+
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-regular fa-user"></i>
+
+
+                        <input type="text" id="signupName" placeholder="Enter your full name" autocomplete="name"
+                            required>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- MOBILE -->
+
+                <div class="form-group">
+
+                    <label for="signupMobile">
+                        Mobile number
+                    </label>
+
+
+                    <div class="phone-input">
+
+                        <div class="country-code">
+
+                            <span>+91</span>
+
+                            <i class="fa-solid fa-chevron-down"></i>
+
+                        </div>
+
+
+                        <input type="tel" id="signupMobile" inputmode="numeric" maxlength="10" autocomplete="tel"
+                            placeholder="Enter mobile number" required>
+
+                    </div>
+
+                </div>
+
+                <!-- EMAIL -->
+
+                <div class="form-group">
+
+                    <label for="signupEmail">
+                        Email address
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-regular fa-envelope"></i>
+
+                        <input type="email" id="signupEmail" placeholder="Enter your email address" autocomplete="email"
+                            required>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- PASSWORD -->
+
+                <div class="form-group">
+
+                    <label for="signupPassword">
+                        Create password
+                    </label>
+
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock"></i>
+
+
+                        <input type="password" id="signupPassword" placeholder="Create a strong password"
+                            autocomplete="new-password" required>
+
+
+                        <button type="button" class="password-toggle" aria-label="Show password">
+
+                            <i class="fa-regular fa-eye"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TERMS -->
+
+                <label class="check-row terms-row">
+
+                    <input type="checkbox" id="signupTerms" required>
+
+                    <span class="custom-checkbox"></span>
+
+                    <span>
+
+                        I agree to the
+
+                        <a href="../About/about.html#privacy">
+                            Privacy Policy
+                        </a>
+
+                        and
+
+                        <a href="../About/about.html#terms">
+                            Terms of Service
+                        </a>
+
+                    </span>
+
+                </label>
+
+
+
+                <!-- SIGN UP -->
+
+                <button type="submit" class="auth-submit">
+
+                    <span>
+                        Create my VChat account
+                    </span>
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+
+
+                <!-- DIVIDER -->
+
+                <div class="auth-divider">
+
+                    <span></span>
+
+                    <p>
+                        or sign up with
+                    </p>
+
+                    <span></span>
+
+                </div>
+
+
+
+                <!-- SOCIAL -->
+
+                <div class="social-buttons">
+
+                    <button type="button" class="social-button">
+
+                        <i class="fa-brands fa-google"></i>
+
+                        Google
+
+                    </button>
+
+
+                    <button type="button" class="social-button">
+
+                        <i class="fa-brands fa-apple"></i>
+
+                        Apple
+
+                    </button>
+
+                </div>
+
+
+            </form>
+
+            <!-- =========================================
+     OTP VERIFICATION
+========================================== -->
+
+            <section class="otp-section" id="otpSection" hidden>
+
+                <div class="otp-header">
+
+                    <button type="button" class="otp-back" id="otpBackButton">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back
+                    </button>
+
+
+                    <div class="otp-security-icon">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+
+                    <span class="auth-eyebrow">
+                        VERIFY YOUR ACCOUNT
+                    </span>
+
+
+                    <h2>
+                        Enter verification codes
+                    </h2>
+
+
+                    <p>
+                        We sent a 6-digit code to your mobile number
+                        and email address.
+                    </p>
+
+                </div>
+
+
+                <!-- MOBILE OTP -->
+
+                <div class="otp-group">
+
+                    <div class="otp-label-row">
+
+                        <label>
+                            Mobile OTP
+                        </label>
+
+                        <span id="mobileOtpStatus">
+                            Not verified
+                        </span>
+
+                    </div>
+
+
+                    <div class="otp-inputs">
+
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+
+                    </div>
+
+
+                    <div class="otp-delivery">
+
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+
+                        <span id="mobileOtpDestination">
+                            +91 XXXXXXXX
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- EMAIL OTP -->
+
+                <div class="otp-group">
+
+                    <div class="otp-label-row">
+
+                        <label>
+                            Email OTP
+                        </label>
+
+                        <span id="emailOtpStatus">
+                            Not verified
+                        </span>
+
+                    </div>
+
+
+                    <div class="otp-inputs">
+
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+                        <input type="text" maxlength="1" inputmode="numeric">
+
+                    </div>
+
+
+                    <div class="otp-delivery">
+
+                        <i class="fa-regular fa-envelope"></i>
+
+                        <span id="emailOtpDestination">
+                            user@example.com
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TIMER -->
+
+                <div class="otp-timer">
+
+                    <span id="otpTimer">
+                        Resend available in 30s
+                    </span>
+
+                    <button type="button" id="resendOtp" disabled>
+                        Resend OTP
+                    </button>
+
+                </div>
+
+
+
+                <!-- VERIFY -->
+
+                <button type="button" class="auth-submit" id="verifyBothOtp">
+
+                    <span>
+                        Verify & Continue
+                    </span>
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+
+
+                <p class="otp-note">
+
+                    <i class="fa-solid fa-lock"></i>
+
+                    Both codes must be verified to continue.
+
+                </p>
+
+            </section>
+
+
+
+            <!-- =================================
+                 SECURITY NOTE
+            ================================== -->
+
+            <div class="security-note">
+
+                <span class="security-icon">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                </span>
+
+
+                <span>
+                    Your account information stays protected.
+                </span>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================================
+         FOOTER
+    ========================================== -->
+
+    <footer class="auth-footer">
+
+        <span>
+            © 2026 VChat
+        </span>
+
+        <span class="footer-separator">
+            •
+        </span>
+
+        <span>
+            Simple. Private. Connected.
+        </span>
+
+    </footer>
+
+    <script src="auth.js"></script>
+
+</body>
+
+</html>

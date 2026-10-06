@@ -1,0 +1,25 @@
+# Environment and local secrets
+.env
+.env.local
+.env.*.local
+js/runtime-config.js
+
+# Dependencies
+node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Supabase local cache (if CLI is used later)
+supabase/.temp/
+supabase/.branches/
+
+# Never commit service-role keys or dumps
+*service_role*
+*.pem
+*.p12
+dump.sql
