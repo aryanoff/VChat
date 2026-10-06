@@ -420,6 +420,28 @@
 
             </header>
 
+            <!-- =================================
+                 IN-CHAT SEARCH BAR
+            ================================== -->
+            <div class="in-chat-search-bar" id="inChatSearchBar" hidden>
+                <div class="search-bar-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-bar-icon"></i>
+                    <input type="text" id="inChatSearchInput" placeholder="Search in this conversation..." autocomplete="off">
+                    <span class="search-match-count" id="inChatSearchMatchCount">0 of 0</span>
+                </div>
+                <div class="search-bar-actions">
+                    <button type="button" class="search-nav-btn" id="inChatSearchPrevBtn" title="Previous match" aria-label="Previous match">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button type="button" class="search-nav-btn" id="inChatSearchNextBtn" title="Next match" aria-label="Next match">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <button type="button" class="search-close-btn" id="inChatSearchCloseBtn" title="Close search" aria-label="Close search">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
 
 
             <!-- =================================
@@ -499,10 +521,85 @@
 
 
             <!-- =================================
+                 COMPOSER TOP BARS
+            ================================== -->
+
+            <!-- Reply bar -->
+            <div class="composer-top-bar reply-bar" id="replyPreviewBar" hidden>
+                <div class="reply-bar-accent"></div>
+                <div class="reply-bar-content">
+                    <strong id="replySenderName">Replying to message</strong>
+                    <p id="replyTextSnippet">Original message snippet...</p>
+                </div>
+                <button type="button" class="reply-cancel-btn" id="cancelReplyBtn" title="Cancel reply" aria-label="Cancel reply">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Edit bar -->
+            <div class="composer-top-bar edit-bar" id="editingMessageBar" hidden>
+                <div class="edit-bar-accent"></div>
+                <div class="edit-bar-content">
+                    <span class="edit-tag"><i class="fa-solid fa-pencil"></i> Editing message</span>
+                    <p id="editingTextSnippet">Original message text...</p>
+                </div>
+                <button type="button" class="reply-cancel-btn" id="cancelEditBtn" title="Cancel editing" aria-label="Cancel editing">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Blocked notice banner -->
+            <div class="blocked-composer-notice" id="blockedComposerNotice" hidden>
+                <i class="fa-solid fa-ban"></i>
+                <span>You blocked this contact. Unblock to send messages.</span>
+                <button type="button" class="unblock-banner-btn" id="unblockBannerBtn">Unblock</button>
+            </div>
+
+
+            <!-- =================================
                  MESSAGE COMPOSER
             ================================== -->
 
-            <footer class="message-composer">
+            <footer class="message-composer" id="messageComposer">
+
+                <!-- Attachment Menu Popup -->
+                <div class="composer-popup-menu attachment-popup" id="attachmentPopup" hidden>
+                    <button type="button" class="attachment-popup-item" id="attachPhotoBtn">
+                        <div class="attach-item-icon icon-photo"><i class="fa-solid fa-image"></i></div>
+                        <span>Photos & Videos</span>
+                    </button>
+                    <button type="button" class="attachment-popup-item" id="attachDocBtn">
+                        <div class="attach-item-icon icon-doc"><i class="fa-solid fa-file-lines"></i></div>
+                        <span>Documents & Files</span>
+                    </button>
+                </div>
+
+                <!-- Emoji Picker Popup -->
+                <div class="composer-popup-menu emoji-popup" id="emojiPickerPopup" hidden>
+                    <div class="emoji-picker-header">
+                        <span>Quick Reactions & Emojis</span>
+                    </div>
+                    <div class="emoji-picker-grid" id="emojiPickerGrid"></div>
+                </div>
+
+                <!-- Voice Recording Overlay -->
+                <div class="voice-recording-bar" id="voiceRecordingBar" hidden>
+                    <div class="voice-recording-indicator">
+                        <span class="recording-pulse"></span>
+                        <span class="voice-recording-timer" id="voiceRecordingTimer">0:00</span>
+                    </div>
+                    <div class="voice-waveform">
+                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                        <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                        <span class="wave-bar"></span><span class="wave-bar"></span>
+                    </div>
+                    <button type="button" class="voice-cancel-btn" id="cancelVoiceBtn" title="Cancel recording" aria-label="Cancel recording">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                    <button type="button" class="voice-send-btn" id="sendVoiceBtn" title="Send voice note" aria-label="Send voice note">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
 
 
                 <button
@@ -875,6 +972,348 @@
             </div>
 
         </div>
+    </div>
+
+
+
+    <!-- =========================================
+         CALLING MODAL
+    ========================================== -->
+
+    <div class="modal-overlay call-modal-overlay" id="callModal" hidden role="dialog" aria-modal="true" aria-labelledby="callContactName">
+        <div class="call-card">
+            <div class="call-header">
+                <span class="call-badge" id="callTypeBadge"><i class="fa-solid fa-phone"></i> Voice Call</span>
+                <span class="call-secure-note"><i class="fa-solid fa-shield-halved"></i> Private & Direct</span>
+            </div>
+            <div class="call-avatar-wrap">
+                <div class="call-avatar-pulse"></div>
+                <div class="large-avatar avatar-green call-main-avatar" id="callContactAvatar">
+                    <span id="callContactInitials">VC</span>
+                </div>
+            </div>
+            <h2 id="callContactName">Aryan Sharma</h2>
+            <p class="call-status-label" id="callStatusLabel">Calling...</p>
+            <div class="call-timer" id="callTimer" hidden>00:00</div>
+            <div class="call-video-preview" id="callVideoPreview" hidden>
+                <video id="callLocalVideo" autoplay playsinline muted></video>
+            </div>
+            <div class="call-controls">
+                <button type="button" class="call-control-btn" id="callMuteBtn" title="Mute microphone" aria-label="Mute microphone">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button type="button" class="call-control-btn" id="callCameraBtn" title="Toggle camera" aria-label="Toggle camera" hidden>
+                    <i class="fa-solid fa-video"></i>
+                </button>
+                <button type="button" class="call-control-btn end-call-btn" id="callEndBtn" title="End call" aria-label="End call">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         MEDIA LIGHTBOX MODAL
+    ========================================== -->
+
+    <div class="media-lightbox-overlay" id="mediaLightboxModal" hidden role="dialog" aria-modal="true">
+        <header class="lightbox-header">
+            <div class="lightbox-info">
+                <strong id="lightboxTitle">Media</strong>
+                <span id="lightboxSubtitle">Shared in conversation</span>
+            </div>
+            <div class="lightbox-actions">
+                <button type="button" class="lightbox-btn" id="lightboxZoomOutBtn" title="Zoom out" aria-label="Zoom out">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <button type="button" class="lightbox-btn" id="lightboxZoomInBtn" title="Zoom in" aria-label="Zoom in">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button type="button" class="lightbox-btn" id="lightboxZoomResetBtn" title="Reset zoom" aria-label="Reset zoom">
+                    <i class="fa-solid fa-compress"></i>
+                </button>
+                <a class="lightbox-btn" id="lightboxDownloadBtn" title="Download" aria-label="Download" target="_blank" download>
+                    <i class="fa-solid fa-download"></i>
+                </a>
+                <button type="button" class="lightbox-btn lightbox-close" id="lightboxCloseBtn" title="Close (Esc)" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </header>
+        <div class="lightbox-viewport" id="lightboxViewport">
+            <button type="button" class="lightbox-nav-btn prev" id="lightboxPrevBtn" title="Previous (Left arrow)" aria-label="Previous">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="lightbox-content-box" id="lightboxContentBox">
+                <img id="lightboxImage" src="" alt="Shared media">
+            </div>
+            <button type="button" class="lightbox-nav-btn next" id="lightboxNextBtn" title="Next (Right arrow)" aria-label="Next">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         MUTE NOTIFICATIONS DURATION MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="muteModal" hidden role="dialog" aria-modal="true" aria-labelledby="muteModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span>NOTIFICATIONS</span>
+                    <h2 id="muteModalTitle">Mute notifications</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeMuteModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="modal-help">
+                Other participants will not see that you muted this chat. You will still receive messages silently.
+            </p>
+            <div class="mute-options-list">
+                <label class="mute-option-item">
+                    <input type="radio" name="muteDuration" value="1h" checked>
+                    <span>1 hour</span>
+                </label>
+                <label class="mute-option-item">
+                    <input type="radio" name="muteDuration" value="8h">
+                    <span>8 hours</span>
+                </label>
+                <label class="mute-option-item">
+                    <input type="radio" name="muteDuration" value="1w">
+                    <span>1 week</span>
+                </label>
+                <label class="mute-option-item">
+                    <input type="radio" name="muteDuration" value="always">
+                    <span>Always</span>
+                </label>
+            </div>
+            <button type="button" class="modal-action" id="confirmMuteBtn">
+                <i class="fa-solid fa-bell-slash"></i>
+                <span>Mute Notifications</span>
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         REPORT CONTACT MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="reportModal" hidden role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span>TRUST & SAFETY</span>
+                    <h2 id="reportModalTitle">Report Contact</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeReportModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="modal-help">
+                Select a reason for reporting this contact. Reports are confidential and help keep VChat safe.
+            </p>
+            <div class="report-reasons-list">
+                <label class="report-reason-item">
+                    <input type="radio" name="reportReason" value="Spam" checked>
+                    <span>Spam or unsolicited messages</span>
+                </label>
+                <label class="report-reason-item">
+                    <input type="radio" name="reportReason" value="Harassment">
+                    <span>Harassment or abusive behavior</span>
+                </label>
+                <label class="report-reason-item">
+                    <input type="radio" name="reportReason" value="Scam">
+                    <span>Scam, fraud, or phishing</span>
+                </label>
+                <label class="report-reason-item">
+                    <input type="radio" name="reportReason" value="Other">
+                    <span>Other concern</span>
+                </label>
+            </div>
+            <div class="profile-field-group">
+                <label for="reportDetailsInput">Additional comments (optional)</label>
+                <textarea id="reportDetailsInput" placeholder="Describe what happened..." rows="3" maxlength="300"></textarea>
+            </div>
+            <button type="button" class="modal-action danger" id="submitReportBtn">
+                <i class="fa-solid fa-flag"></i>
+                <span>Submit Report</span>
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         STARRED MESSAGES MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="starredMessagesModal" hidden role="dialog" aria-modal="true" aria-labelledby="starredTitle">
+        <div class="modal-card modal-wide">
+            <div class="modal-header">
+                <div>
+                    <span>SAVED</span>
+                    <h2 id="starredTitle">Starred Messages</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeStarredModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="starred-messages-list" id="starredMessagesList">
+                <div class="empty-starred-placeholder">
+                    <i class="fa-regular fa-star"></i>
+                    <strong>No starred messages</strong>
+                    <p>Star important messages in any chat to find them easily later.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         SHARED MEDIA BROWSER MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="sharedMediaModal" hidden role="dialog" aria-modal="true" aria-labelledby="sharedMediaTitle">
+        <div class="modal-card modal-wide">
+            <div class="modal-header">
+                <div>
+                    <span>MEDIA & DOCS</span>
+                    <h2 id="sharedMediaTitle">Shared Media</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeSharedMediaModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="shared-media-tabs">
+                <button type="button" class="shared-tab active" data-tab="all">All</button>
+                <button type="button" class="shared-tab" data-tab="images">Photos</button>
+                <button type="button" class="shared-tab" data-tab="docs">Files & Docs</button>
+            </div>
+            <div class="shared-media-browser-grid" id="sharedMediaBrowserGrid">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         DELETE MESSAGE CONFIRMATION MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="deleteMessageModal" hidden role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span>CONFIRMATION</span>
+                    <h2 id="deleteModalTitle">Delete message?</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeDeleteModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="modal-help" id="deleteModalHelp">
+                Are you sure you want to delete this message?
+            </p>
+            <div class="modal-button-stack">
+                <button type="button" class="modal-action danger" id="deleteForEveryoneBtn">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Delete for everyone</span>
+                </button>
+                <button type="button" class="modal-action secondary" id="deleteForMeBtn">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <span>Delete for me</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         MESSAGE INFO MODAL
+    ========================================== -->
+
+    <div class="modal-overlay" id="messageInfoModal" hidden role="dialog" aria-modal="true" aria-labelledby="msgInfoTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span>MESSAGE DETAILS</span>
+                    <h2 id="msgInfoTitle">Message Info</h2>
+                </div>
+                <button type="button" class="modal-close" id="closeMsgInfoModal" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="msg-info-details" id="msgInfoDetails"></div>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         COMMAND PALETTE MODAL
+    ========================================== -->
+
+    <div class="modal-overlay command-palette-overlay" id="commandPaletteModal" hidden role="dialog" aria-modal="true">
+        <div class="command-palette-card">
+            <div class="command-palette-search">
+                <i class="fa-solid fa-terminal"></i>
+                <input type="text" id="commandPaletteInput" placeholder="Type a command or shortcut..." autocomplete="off">
+                <kbd>ESC</kbd>
+            </div>
+            <div class="command-palette-results" id="commandPaletteResults"></div>
+        </div>
+    </div>
+
+
+
+    <!-- =========================================
+         CONVERSATION CONTEXT MENU
+    ========================================== -->
+
+    <div class="custom-context-menu" id="convContextMenu" hidden>
+        <button type="button" data-action="toggle-read">
+            <i class="fa-solid fa-envelope-open"></i>
+            <span id="ctxMarkReadLabel">Mark as read</span>
+        </button>
+        <button type="button" data-action="toggle-pin">
+            <i class="fa-solid fa-thumbtack"></i>
+            <span id="ctxPinLabel">Pin chat</span>
+        </button>
+        <button type="button" data-action="toggle-mute">
+            <i class="fa-solid fa-bell-slash"></i>
+            <span id="ctxMuteLabel">Mute notifications</span>
+        </button>
+        <div class="context-menu-divider"></div>
+        <button type="button" class="danger" data-action="delete-chat">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Delete conversation</span>
+        </button>
+    </div>
+
+
+
+    <!-- =========================================
+         MESSAGE REACTION PICKER POPUP
+    ========================================== -->
+
+    <div class="message-reaction-picker" id="messageReactionPopup" hidden>
+        <button type="button" class="reaction-emoji-btn" data-emoji="❤️" title="Love">❤️</button>
+        <button type="button" class="reaction-emoji-btn" data-emoji="👍" title="Thumbs up">👍</button>
+        <button type="button" class="reaction-emoji-btn" data-emoji="😂" title="Laugh">😂</button>
+        <button type="button" class="reaction-emoji-btn" data-emoji="😮" title="Surprised">😮</button>
+        <button type="button" class="reaction-emoji-btn" data-emoji="😢" title="Sad">😢</button>
+        <button type="button" class="reaction-emoji-btn" data-emoji="🙏" title="Thanks">🙏</button>
     </div>
 
 
