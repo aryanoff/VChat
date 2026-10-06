@@ -42,6 +42,12 @@ const emojiButton = document.getElementById("emojiButton");
 const voiceButton = document.getElementById("voiceButton");
 const chatSearchButton = document.getElementById("chatSearchButton");
 const sidebarMenuButton = document.getElementById("sidebarMenuButton");
+const chatHeroEmpty = document.getElementById("chatHeroEmpty");
+const secureNotice = document.getElementById("secureNotice");
+const emptyConversationState = document.getElementById("emptyConversationState");
+const startFirstChatBtn = document.getElementById("startFirstChatBtn");
+const heroStartChatBtn = document.getElementById("heroStartChatBtn");
+const loadOlderBtn = document.getElementById("loadOlderBtn");
 
 let client = null;
 let currentUser = null;
@@ -164,7 +170,7 @@ function applyAvatar(container, url, name) {
 
 function emptyConversationList() {
     if (!conversationList) return;
-    conversationList.querySelectorAll(".conversation-item").forEach((el) => el.remove());
+    conversationList.querySelectorAll(".conversation-item:not([data-template])").forEach((el) => el.remove());
 }
 
 async function loadBlocked() {
@@ -191,6 +197,14 @@ function renderConversationList() {
     emptyConversationList();
     const query = (chatSearch && chatSearch.value.trim().toLowerCase()) || "";
     let visible = 0;
+
+    if (conversations.length === 0) {
+        if (emptyConversationState) emptyConversationState.hidden = false;
+        if (noSearchResult) noSearchResult.hidden = true;
+        return;
+    }
+    if (emptyConversationState) emptyConversationState.hidden = true;
+
     conversations.forEach((row) => {
         const name = row.peer_name || row.title || "Chat";
         const isGroup = !!row.is_group;
@@ -246,32 +260,48 @@ function renderConversationList() {
         content.appendChild(bottom);
         item.appendChild(avatar);
         item.appendChild(content);
-        conversationList.insertBefore(item, noSearchResult || null);
+        conversationList.insertBefore(item, emptyConversationState || noSearchResult || null);
     });
-    if (noSearchResult) noSearchResult.hidden = visible !== 0;
+
+    if (noSearchResult) noSearchResult.hidden = (visible > 0 || !query);
 }
 
-function resetThreadShell() {
+function clearMessageElements() {
     if (!chatMessages) return;
-    Dom.clear(chatMessages);
-    const pattern = document.createElement("div");
-    pattern.className = "chat-pattern";
-    pattern.setAttribute("aria-hidden", "true");
-    chatMessages.appendChild(pattern);
-    const loadOlder = document.createElement("button");
-    loadOlder.type = "button";
-    loadOlder.id = "loadOlderBtn";
-    loadOlder.className = "load-older-btn";
-    loadOlder.textContent = "Load older messages";
-    loadOlder.addEventListener("click", () => loadMessages(true));
-    chatMessages.appendChild(loadOlder);
-    const notice = document.createElement("div");
-    notice.className = "secure-notice";
-    const lock = document.createElement("i");
-    lock.className = "fa-solid fa-lock";
-    notice.appendChild(lock);
-    notice.appendChild(document.createTextNode(" Messages are stored in your Supabase project with RLS. This is not end-to-end encryption."));
-    chatMessages.appendChild(notice);
+    chatMessages.querySelectorAll(".message, .thread-starter-banner").forEach((el) => el.remove());
+}
+
+function showIdleThreadState() {
+    activeConversationId = null;
+    activePeer = null;
+    renderedIds = new Set();
+    clearMessageElements();
+
+    if (chatHeroEmpty) chatHeroEmpty.hidden = false;
+    if (loadOlderBtn) loadOlderBtn.hidden = true;
+    if (secureNotice) secureNotice.hidden = true;
+    if (typingIndicator) typingIndicator.hidden = true;
+
+    if (activeChatName) activeChatName.textContent = "VChat";
+    if (activeChatStatus) {
+        Dom.clear(activeChatStatus);
+        activeChatStatus.textContent = "Select a conversation";
+    }
+    if (activeUserButton) {
+        const av = activeUserButton.querySelector(".user-avatar");
+        if (av) {
+            Dom.clear(av);
+            av.className = "user-avatar avatar-green";
+            av.textContent = "VC";
+        }
+    }
+    if (messageInput) {
+        messageInput.value = "";
+        messageInput.disabled = true;
+        messageInput.placeholder = "Select a conversation to start chatting...";
+    }
+    if (sendButton) sendButton.disabled = true;
+    updateDetails(null);
 }
 
 function messageStatusTicks(msg) {
@@ -375,18 +405,38 @@ async function loadMessages(older) {
     }
     const batch = (data || []).slice().reverse();
     hasMore = (data || []).length === PAGE_SIZE;
-    if (loadBtn) loadBtn.hidden = !hasMore;
+
     if (!older) {
-        resetThreadShell();
+        clearMessageElements();
         renderedIds = new Set();
-        if (typingIndicator) chatMessages.appendChild(typingIndicator);
+        if (chatHeroEmpty) chatHeroEmpty.hidden = true;
+        if (secureNotice) secureNotice.hidden = false;
     }
+
+    if (loadBtn) loadBtn.hidden = !hasMore;
+
     if (batch.length) oldestCursor = batch[0].created_at;
     for (const msg of batch) {
         await hydrateAttachment(msg);
         appendMessage(msg, older);
     }
-    if (!older) scrollMessagesToBottom();
+    if (!older) {
+        if (batch.length === 0) {
+            const starter = document.createElement("div");
+            starter.className = "thread-starter-banner";
+            const icon = document.createElement("i");
+            icon.className = "fa-solid fa-comments";
+            const strong = document.createElement("strong");
+            strong.textContent = "No messages yet";
+            const p = document.createElement("p");
+            p.textContent = "Say hello to " + (activePeer ? activePeer.name : "your friend") + "! Send a message below. 👋";
+            starter.appendChild(icon);
+            starter.appendChild(strong);
+            starter.appendChild(p);
+            chatMessages.insertBefore(starter, typingIndicator || null);
+        }
+        scrollMessagesToBottom();
+    }
     if (loadBtn && hasMore) loadBtn.textContent = "Load older messages";
 }
 
@@ -425,6 +475,8 @@ function subscribeConversation(id) {
         }, async (payload) => {
             const msg = payload.new;
             if (renderedIds.has(msg.id)) return;
+            const starter = chatMessages.querySelector(".thread-starter-banner");
+            if (starter) starter.remove();
             await hydrateAttachment(msg);
             appendMessage(msg, false);
             scrollMessagesToBottom();
@@ -493,16 +545,80 @@ function subscribePresence() {
     });
 }
 
+async function loadDetailsMedia() {
+    if (!detailsPanel || !activeConversationId) return;
+    const mediaGrid = detailsPanel.querySelector("#detailsMediaGrid, .media-grid");
+    if (!mediaGrid) return;
+    try {
+        const { data } = await client
+            .from("attachments")
+            .select("filename, mime_type, size_bytes")
+            .eq("conversation_id", activeConversationId)
+            .limit(6);
+        Dom.clear(mediaGrid);
+        if (data && data.length) {
+            data.forEach((file) => {
+                const cell = document.createElement("div");
+                cell.className = "media-placeholder";
+                const isImg = (file.mime_type || "").startsWith("image/");
+                const icon = document.createElement("i");
+                icon.className = isImg ? "fa-regular fa-image" : "fa-regular fa-file";
+                cell.appendChild(icon);
+                cell.title = file.filename + " (" + Dom.formatBytes(file.size_bytes) + ")";
+                mediaGrid.appendChild(cell);
+            });
+        } else {
+            const empty = document.createElement("div");
+            empty.className = "media-placeholder empty";
+            const icon = document.createElement("i");
+            icon.className = "fa-regular fa-image";
+            const span = document.createElement("span");
+            span.textContent = "No shared media yet";
+            empty.appendChild(icon);
+            empty.appendChild(span);
+            mediaGrid.appendChild(empty);
+        }
+    } catch {
+        // silent
+    }
+}
+
 function updateDetails(peer) {
-    if (!detailsPanel || !peer) return;
-    const nameEl = detailsPanel.querySelector(".details-profile h2");
-    const statusEl = detailsPanel.querySelector(".details-profile > p");
-    const aboutEl = detailsPanel.querySelector(".details-section > p");
-    const avatarEl = detailsPanel.querySelector(".large-avatar");
+    if (!detailsPanel) return;
+    const nameEl = detailsPanel.querySelector("#detailsName, .details-profile h2");
+    const statusEl = detailsPanel.querySelector("#detailsStatus, .details-profile > p");
+    const aboutEl = detailsPanel.querySelector("#detailsAbout, .details-section > p");
+    const avatarEl = detailsPanel.querySelector("#detailsAvatar, .large-avatar");
+    const mediaGrid = detailsPanel.querySelector("#detailsMediaGrid, .media-grid");
+
+    if (!peer) {
+        if (nameEl) nameEl.textContent = "Select a chat";
+        if (statusEl) statusEl.textContent = "Offline";
+        if (aboutEl) aboutEl.textContent = "Select a conversation to view contact info.";
+        if (avatarEl) {
+            Dom.clear(avatarEl);
+            avatarEl.textContent = "VC";
+        }
+        if (mediaGrid) {
+            Dom.clear(mediaGrid);
+            const empty = document.createElement("div");
+            empty.className = "media-placeholder empty";
+            const icon = document.createElement("i");
+            icon.className = "fa-regular fa-image";
+            const span = document.createElement("span");
+            span.textContent = "No media";
+            empty.appendChild(icon);
+            empty.appendChild(span);
+            mediaGrid.appendChild(empty);
+        }
+        return;
+    }
+
     if (nameEl) nameEl.textContent = peer.name;
     if (statusEl) statusEl.textContent = onlinePeers.has(peer.id) ? "Online" : (peer.lastSeenAt ? "Last seen " + Dom.formatTime(peer.lastSeenAt) : "Offline");
     if (aboutEl) aboutEl.textContent = peer.about || "Available for conversation on VChat.";
     if (avatarEl) applyAvatar(avatarEl, peer.avatarUrl, peer.name);
+    loadDetailsMedia();
 }
 
 async function openConversation(id) {
@@ -518,6 +634,23 @@ async function openConversation(id) {
     };
     oldestCursor = null;
     hasMore = true;
+
+    if (conversationList) {
+        conversationList.querySelectorAll(".conversation-item").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.id === id);
+        });
+    }
+
+    if (messageInput) {
+        messageInput.disabled = false;
+        messageInput.placeholder = "Type a message...";
+        messageInput.focus();
+    }
+    if (sendButton) sendButton.disabled = false;
+
+    if (chatHeroEmpty) chatHeroEmpty.hidden = true;
+    if (secureNotice) secureNotice.hidden = false;
+
     if (activeChatName) activeChatName.textContent = activePeer.name;
     if (activeUserButton) {
         const av = activeUserButton.querySelector(".user-avatar");
@@ -726,70 +859,66 @@ if (chatSearchButton && chatSearch) {
 }
 
 if (detailsPanel) {
-    const detailActionBtns = detailsPanel.querySelectorAll(".details-actions button");
-    if (detailActionBtns[0]) detailActionBtns[0].addEventListener("click", () => notBuilt("Voice calling"));
-    if (detailActionBtns[1]) detailActionBtns[1].addEventListener("click", () => notBuilt("Video calling"));
-    if (detailActionBtns[2]) {
-        detailActionBtns[2].addEventListener("click", () => {
-            const q = window.prompt("Search in this conversation (client-side):", "");
+    const callBtn = document.getElementById("detailsCallBtn") || detailsPanel.querySelector(".details-actions button:nth-child(1)");
+    const videoBtn = document.getElementById("detailsVideoBtn") || detailsPanel.querySelector(".details-actions button:nth-child(2)");
+    const searchBtn = document.getElementById("detailsSearchBtn") || detailsPanel.querySelector(".details-actions button:nth-child(3)");
+    const viewAllBtn = document.getElementById("detailsViewAllMediaBtn") || detailsPanel.querySelector(".details-title-row button");
+    const starredBtn = document.getElementById("detailsStarredBtn");
+    const muteBtn = document.getElementById("detailsMuteBtn");
+    const blockBtn = document.getElementById("detailsBlockBtn");
+
+    if (callBtn) {
+        callBtn.addEventListener("click", () => {
+            if (!activeConversationId) return showToast("Select a conversation to place a call.", "fa-solid fa-phone");
+            notBuilt("Voice calling");
+        });
+    }
+    if (videoBtn) {
+        videoBtn.addEventListener("click", () => {
+            if (!activeConversationId) return showToast("Select a conversation to start video.", "fa-solid fa-video");
+            notBuilt("Video calling");
+        });
+    }
+    if (searchBtn) {
+        searchBtn.addEventListener("click", () => {
+            if (!activeConversationId) return showToast("Select a conversation to search.", "fa-solid fa-magnifying-glass");
+            const q = window.prompt("Search in this conversation:", "");
             if (!q) return;
             const hits = [];
             chatMessages.querySelectorAll(".message p").forEach((p) => {
                 if (p.textContent.toLowerCase().includes(q.toLowerCase())) hits.push(p.textContent);
             });
-            showToast(hits.length ? hits.length + " match(es) in the loaded messages." : "No matches in the loaded page of messages.", "fa-solid fa-magnifying-glass");
+            showToast(hits.length ? hits.length + " match(es) in the loaded messages." : "No matches found in this conversation.", "fa-solid fa-magnifying-glass");
         });
     }
-    const viewAllBtn = detailsPanel.querySelector(".details-title-row button");
     if (viewAllBtn) {
-        viewAllBtn.addEventListener("click", async () => {
-            if (!activeConversationId) return;
-            const { data } = await client
-                .from("attachments")
-                .select("filename, mime_type, size_bytes")
-                .eq("conversation_id", activeConversationId)
-                .limit(20);
-            const grid = detailsPanel.querySelector(".media-grid");
-            if (grid) {
-                Dom.clear(grid);
-                (data || []).forEach((file) => {
-                    const cell = document.createElement("div");
-                    cell.className = "media-placeholder";
-                    const icon = document.createElement("i");
-                    icon.className = (file.mime_type || "").startsWith("image/") ? "fa-regular fa-image" : "fa-regular fa-file";
-                    cell.appendChild(icon);
-                    cell.title = file.filename + " (" + Dom.formatBytes(file.size_bytes) + ")";
-                    grid.appendChild(cell);
-                });
-                if (!(data || []).length) {
-                    const empty = document.createElement("div");
-                    empty.className = "media-placeholder";
-                    empty.textContent = "None";
-                    grid.appendChild(empty);
-                }
-            }
+        viewAllBtn.addEventListener("click", () => {
+            if (!activeConversationId) return showToast("Select a conversation to view media.", "fa-solid fa-images");
+            loadDetailsMedia();
         });
     }
-    const optionBtns = detailsPanel.querySelectorAll(".details-options button");
-    if (optionBtns[0]) {
-        optionBtns[0].addEventListener("click", () => {
+    if (starredBtn) {
+        starredBtn.addEventListener("click", () => {
             showToast("Starred messages are not stored yet.", "fa-regular fa-star");
         });
     }
-    if (optionBtns[1]) {
-        optionBtns[1].addEventListener("click", async () => {
+    if (muteBtn) {
+        muteBtn.addEventListener("click", async () => {
+            if (!activeConversationId) return showToast("Select a conversation first.", "fa-solid fa-bell");
             const row = conversations.find((c) => c.conversation_id === activeConversationId);
             const next = !(row && row.muted);
             await client.from("conversation_members").update({ muted: next })
                 .eq("conversation_id", activeConversationId)
                 .eq("user_id", currentUser.id);
+            const muteLabel = document.getElementById("detailsMuteLabel");
+            if (muteLabel) muteLabel.textContent = next ? "Unmute notifications" : "Mute notifications";
             showToast(next ? "Notifications muted for this chat." : "Notifications enabled for this chat.", "fa-solid fa-bell");
             await loadConversations();
         });
     }
-    if (optionBtns[2]) {
-        optionBtns[2].addEventListener("click", async () => {
-            if (!activePeer || !activePeer.id) return;
+    if (blockBtn) {
+        blockBtn.addEventListener("click", async () => {
+            if (!activePeer || !activePeer.id) return showToast("Select a contact to block.", "fa-solid fa-ban");
             const confirmed = window.confirm("Block " + activePeer.name + "? You will not be able to message each other.");
             if (!confirmed) return;
             const { error } = await client.from("blocked_users").insert({
@@ -971,21 +1100,30 @@ async function startNewChat(user) {
 function openProfileEditor() {
     let modal = document.getElementById("profileModal");
     if (!modal) return;
-    document.getElementById("profileNameInput").value = currentProfile.name || "";
-    document.getElementById("profileAboutInput").value = currentProfile.about || "";
+    const nameInput = document.getElementById("profileNameInput");
+    const aboutInput = document.getElementById("profileAboutInput");
     const emailEl = document.getElementById("profileEmailRead");
     const mobileEl = document.getElementById("profileMobileRead");
+    const avatarModal = document.getElementById("profileModalAvatar");
+
+    if (nameInput) nameInput.value = currentProfile.name || "";
+    if (aboutInput) aboutInput.value = currentProfile.about || "";
     if (emailEl) emailEl.textContent = currentProfile.email || currentUser.email;
     if (mobileEl) mobileEl.textContent = currentProfile.mobile ? "+91 " + currentProfile.mobile : "Not set";
+    if (avatarModal) applyAvatar(avatarModal, currentProfile.avatarUrl, currentProfile.name);
     modal.hidden = false;
 }
 
 if (profileButton) profileButton.addEventListener("click", openProfileEditor);
 
+if (startFirstChatBtn) startFirstChatBtn.addEventListener("click", openNewChatModal);
+if (heroStartChatBtn) heroStartChatBtn.addEventListener("click", openNewChatModal);
+if (loadOlderBtn) loadOlderBtn.addEventListener("click", () => loadMessages(true));
+
 document.addEventListener("click", async (event) => {
     const modal = document.getElementById("profileModal");
     if (!modal) return;
-    if (event.target.id === "closeProfileModal" || event.target === modal) {
+    if (event.target.id === "closeProfileModal" || event.target.closest("#closeProfileModal") || event.target === modal) {
         modal.hidden = true;
         return;
     }
@@ -1008,8 +1146,10 @@ document.addEventListener("click", async (event) => {
         currentProfile = api.mapProfile(data) || currentProfile;
         if (currentUserName) currentUserName.textContent = currentProfile.name;
         if (currentUserInitials) currentUserInitials.textContent = Dom.initials(currentProfile.name);
+        const avatarWrap = profileButton && profileButton.querySelector(".user-avatar");
+        if (avatarWrap) applyAvatar(avatarWrap, currentProfile.avatarUrl, currentProfile.name);
         modal.hidden = true;
-        showToast("Profile updated.", "fa-solid fa-circle-check");
+        showToast("Profile updated successfully.", "fa-solid fa-circle-check");
     }
 });
 
@@ -1044,7 +1184,9 @@ if (avatarInput) {
         currentProfile.avatarUrl = publicUrl;
         const avatarWrap = profileButton && profileButton.querySelector(".user-avatar");
         applyAvatar(avatarWrap, publicUrl, currentProfile.name);
-        showToast("Avatar updated.", "fa-solid fa-circle-check");
+        const avatarModal = document.getElementById("profileModalAvatar");
+        if (avatarModal) applyAvatar(avatarModal, publicUrl, currentProfile.name);
+        showToast("Avatar updated successfully.", "fa-solid fa-circle-check");
     });
 }
 
@@ -1090,19 +1232,7 @@ window.addEventListener("offline", () => connectionBanner("offline"));
     try {
         await requireSession();
         emptyConversationList();
-        resetThreadShell();
-        const empty = document.createElement("div");
-        empty.className = "empty-chat-state";
-        const icon = document.createElement("i");
-        icon.className = "fa-regular fa-comments";
-        const title = document.createElement("strong");
-        title.textContent = "Your conversations";
-        const p = document.createElement("p");
-        p.textContent = "Select a chat or start a new one from the + button.";
-        empty.appendChild(icon);
-        empty.appendChild(title);
-        empty.appendChild(p);
-        chatMessages.appendChild(empty);
+        showIdleThreadState();
         await loadBlocked();
         await loadConversations();
         subscribeInbox();
